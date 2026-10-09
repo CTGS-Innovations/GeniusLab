@@ -2,7 +2,8 @@ import { ALIGNMENT, MILESTONES, SOURCES } from '../data/curriculum';
 import { labById, questionsForSkill, skillById, skillsForLab } from '../data';
 import { TIER_LABEL, UNLOCK_AT, labMastery, mastery, skillDepth, stat, suggestedSkill, tierFor, type Progress } from '../engine/progress';
 import type { LabId } from '../types';
-import { Bar, Ring } from './ui';
+import { Icon } from './Icon';
+import { Bar, Ring, accentStyle } from './ui';
 
 interface Props {
   lab: LabId;
@@ -19,9 +20,11 @@ export function LabView({ lab: labId, progress, onPractice, onBack }: Props) {
   const next = suggestedSkill(progress, labId);
 
   return (
-    <div className="screen" style={{ ['--accent' as string]: lab.color }}>
+    <div className="screen" style={accentStyle(lab.color)}>
       <div className="topbar">
-        <button className="btn btn-ghost" onClick={onBack}>← Home</button>
+        <button className="btn btn-ghost" onClick={onBack}>
+          <Icon name="back" /> Home
+        </button>
       </div>
       <header className="lab-header">
         <Ring value={labMastery(progress, labId)} color={lab.color} size={84}>
@@ -38,7 +41,7 @@ export function LabView({ lab: labId, progress, onPractice, onBack }: Props) {
       <div className="lab-tree-head">
         <h3 className="section-title">Skill tree</h3>
         <button className="btn btn-primary" onClick={() => onPractice(next.id)}>
-          ▶ Continue: {next.icon} {next.name}
+          <Icon name="play" /> Continue: {next.name}
         </button>
       </div>
       <p className="muted small">
@@ -57,11 +60,11 @@ export function LabView({ lab: labId, progress, onPractice, onBack }: Props) {
                 return (
                   <button key={s.id} className={`card skill ${locked ? 'locked' : ''}`} disabled={locked} onClick={() => onPractice(s.id)}>
                     <div className="skill-head">
-                      <span className="skill-icon">{locked ? '🔒' : s.icon}</span>
+                      <span className="skill-icon">{locked ? <Icon name="lock" /> : s.icon}</span>
                       <span className={`tier tier-${tier}`}>{TIER_LABEL[tier]}</span>
                     </div>
                     <strong>{s.name}</strong>
-                    <span className="grade-tag">📚 {ALIGNMENT[s.id].grade}</span>
+                    <span className="grade-tag">{ALIGNMENT[s.id].grade}</span>
                     <span className="small muted">{locked ? `Unlock: ${needs.join(' + ')}` : s.blurb}</span>
                     {!locked && (
                       <>
@@ -101,7 +104,9 @@ export function LabView({ lab: labId, progress, onPractice, onBack }: Props) {
                   const tier = tierFor(progress, sk);
                   return (
                     <button key={id} className="milestone-skill" disabled={tier === 'locked'} onClick={() => onPractice(id)}>
-                      {tier === 'locked' ? '🔒' : sk.icon} {sk.name}
+                      <span>
+                        {tier === 'locked' && <Icon name="lock" />} {sk.name}
+                      </span>
                       <span className={`tier tier-${tier}`}>{TIER_LABEL[tier]}</span>
                     </button>
                   );

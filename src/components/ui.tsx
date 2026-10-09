@@ -47,3 +47,12 @@ export function Sparkline({ values, color, height = 64 }: { values: number[]; co
     </svg>
   );
 }
+
+/** Sets a lab color as the accent, with readable ink for anything filled with it. */
+export function accentStyle(color: string): Record<string, string> {
+  return {
+    '--accent': color,
+    '--on-accent': color.startsWith('#') ? 'var(--ink)' : 'var(--on-brand)',
+    '--accent-text': `color-mix(in srgb, ${color} var(--accent-text-mix), black)`,
+  };
+}

@@ -3,6 +3,7 @@ import { SKILL_WHY } from '../data/why';
 import type { CoachCard } from '../engine/coach';
 import type { Progress } from '../engine/progress';
 import { skillById } from '../data';
+import { Icon } from './Icon';
 
 interface Props {
   cards: CoachCard[];
@@ -34,11 +35,12 @@ export function Coach({ cards, skill, lightning, tipsOff, progress, roundTerms, 
           <Brief key={c.id} skill={skill} onDone={() => onDismiss(c.id)} />
         ) : (
           <div key={c.id} className={`coach-card ${c.type}`}>
-            <button className="card-x" onClick={() => onDismiss(c.id)} aria-label="Dismiss">✕</button>
-            <strong>
-              {c.type === 'tip' && `${c.icon} `}
-              {c.title}
-            </strong>
+            <div className="coach-card-head">
+              <strong>{c.title}</strong>
+              <button className="btn btn-ghost icon-btn card-x" onClick={() => onDismiss(c.id)} aria-label="Dismiss">
+                <Icon name="close" />
+              </button>
+            </div>
             <p>{c.text}</p>
           </div>
         ),
@@ -79,12 +81,12 @@ function Brief({ skill, onDone }: { skill: string; onDone: () => void }) {
       <div className="std-links">
         {align.standards.map((st, i) => (
           <a key={i} href={st.url} target="_blank" rel="noreferrer" title={st.text}>
-            MA {st.code} ↗
+            MA {st.code} <Icon name="external" />
           </a>
         ))}
       </div>
       <button className="btn btn-ghost got-it" onClick={onDone}>
-        Got it ✓
+        Got it
       </button>
     </div>
   );
@@ -107,7 +109,9 @@ function Collection({ skill, progress, newest }: { skill: string; progress: Prog
           i < have ? (
             <span key={t} className={`term ${t === newest ? 'new' : ''}`}>{t}</span>
           ) : (
-            <span key={t} className="term locked">🔒 ?</span>
+            <span key={t} className="term locked">
+              <Icon name="lock" label="Locked term" />
+            </span>
           ),
         )}
       </div>

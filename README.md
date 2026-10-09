@@ -29,6 +29,7 @@ npm run dev        # installs any missing packages, then serves http://localhost
 npm test           # engine + content-integrity tests
 npm run build      # typecheck + production build into dist/
 npm start          # build, then serve app + profile API on :4173 (see below)
+npm run audit:ui   # browser check for layout bleed on every screen/theme/viewport (DESIGN.md)
 ```
 
 ## Profiles, backup, and the phone app
@@ -72,6 +73,10 @@ cloudflared tunnel run <TUNNEL_NAME>                    # one-off
 sudo cloudflared service install                        # always on
 sudo cp deploy/geniuslab.service /etc/systemd/system/  # keep the app always on too (edit paths first)
 ```
+
+## Design rules
+
+[DESIGN.md](DESIGN.md) is the source of truth for tokens, layout, components, copy, and the anti-slop list. `npm test` lints the CSS and components against it; `npm run audit:ui` drives every screen in a real browser and fails on bleed, overlap, clipped text, small tap targets, and low contrast.
 
 ## Project layout
 

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { QUESTIONS, labById, skillById } from '../data';
-import { addBoard, toggleSaved, type Progress } from '../engine/progress';
+import { BOARD_EMOJIS, addBoard, toggleSaved, type Progress } from '../engine/progress';
+import { Icon } from './Icon';
+import { accentStyle } from './ui';
 import { MathProvider, T } from './MathText';
 
 interface Props {
@@ -10,24 +12,24 @@ interface Props {
   onBack: () => void;
 }
 
-const EMOJIS = ['📌', '🔥', '🧠', '🎯', '💡', '⭐'];
-
 /** Pinterest-style boards of saved cards. */
 export function Boards({ progress, onProgress, onPlay, onBack }: Props) {
   const [open, setOpen] = useState<string | null>(progress.boards.find((b) => b.items.length)?.id ?? null);
   const [name, setName] = useState('');
-  const [emoji, setEmoji] = useState(EMOJIS[0]);
+  const [emoji, setEmoji] = useState(BOARD_EMOJIS[0]);
   const board = progress.boards.find((b) => b.id === open);
   const total = progress.boards.reduce((n, b) => n + b.items.length, 0);
 
   return (
     <div className="screen boards-screen">
       <div className="topbar">
-        <button className="btn btn-ghost" onClick={onBack}>← Home</button>
+        <button className="btn btn-ghost" onClick={onBack}>
+          <Icon name="back" /> Home
+        </button>
       </div>
-      <h1>📌 My Boards</h1>
+      <h1>My Boards</h1>
       <p className="muted">
-        {total ? `${total} saved ${total === 1 ? 'card' : 'cards'}.` : 'Save cards while you play: tap 📌 after answering, or double-tap a card.'}
+        {total ? `${total} saved ${total === 1 ? 'card' : 'cards'}.` : 'Save cards while you play: tap Save after answering, or double-tap a card.'}
       </p>
 
       <div className="boards-layout">
@@ -53,7 +55,7 @@ export function Boards({ progress, onProgress, onPlay, onBack }: Props) {
               New board
             </label>
             <div className="emoji-row">
-              {EMOJIS.map((x) => (
+              {BOARD_EMOJIS.map((x) => (
                 <button type="button" key={x} className={x === emoji ? 'on' : ''} onClick={() => setEmoji(x)} aria-label={`Use ${x}`}>
                   {x}
                 </button>
@@ -72,11 +74,9 @@ export function Boards({ progress, onProgress, onPlay, onBack }: Props) {
           {board ? (
             <>
               <div className="board-head">
-                <h2>
-                  {board.emoji} {board.name}
-                </h2>
+                <h2>{board.name}</h2>
                 <button className="btn btn-primary" disabled={!board.items.length} onClick={() => onPlay(board.id)}>
-                  ▶ Practice {board.items.length || ''}
+                  <Icon name="play" /> Practice {board.items.length || ''}
                 </button>
               </div>
               {board.items.length === 0 ? (
@@ -90,10 +90,8 @@ export function Boards({ progress, onProgress, onPlay, onBack }: Props) {
                     const lab = labById(skill.lab);
                     return (
                       <MathProvider key={id} on={skill.lab !== 'english'}>
-                        <article className="pin" style={{ ['--accent' as string]: lab.color }}>
-                          <span className="small pin-skill">
-                            {skill.icon} {skill.name}
-                          </span>
+                        <article className="pin" style={accentStyle(lab.color)}>
+                          <span className="small pin-skill">{skill.name}</span>
                           <strong>
                             <T>{q.prompt}</T>
                           </strong>
@@ -103,8 +101,8 @@ export function Boards({ progress, onProgress, onPlay, onBack }: Props) {
                             </span>
                           )}
                           {q.reason && (
-                            <span className="small muted">
-                              💡 <T>{q.reason}</T>
+                            <span className="small muted pin-reason">
+                              <Icon name="bulb" /> <T>{q.reason}</T>
                             </span>
                           )}
                           <button className="btn btn-ghost pin-remove" onClick={() => onProgress((p) => toggleSaved(p, board.id, id))}>

@@ -64,6 +64,9 @@ export interface Board {
   items: string[];
 }
 
+/** Board covers students can pick from. Content, not UI chrome. */
+export const BOARD_EMOJIS = ['📌', '🔥', '🧠', '🎯', '💡', '⭐'];
+
 export const DEFAULT_BOARDS: Board[] = [
   { id: 'traps', name: 'Traps I keep falling for', emoji: '🪤', items: [] },
   { id: 'review', name: 'Review later', emoji: '🔖', items: [] },

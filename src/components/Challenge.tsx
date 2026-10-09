@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { shuffle } from '../engine/session';
+import { Icon } from './Icon';
 import { T } from './MathText';
 import type { ChainQuestion, MatchQuestion, MultipleChoiceQuestion, OrderQuestion, Question, SpotQuestion } from '../types';
 
@@ -93,7 +94,8 @@ function Spot({ q, done, onSubmit }: Props<SpotQuestion>) {
   );
 }
 
-const PAIR_COLORS = ['#4f8cff', '#ff7a59', '#2bc48a', '#c77dff', '#ffc145'];
+/** Mapping line colors: tokens --pair-1 … --pair-5 (DESIGN.md). */
+const PAIR_COLORS = [1, 2, 3, 4, 5].map((n) => `var(--pair-${n})`);
 
 /** Numbered how-to for each game style; the current step is highlighted. */
 export function Guide({ steps, current }: { steps: string[]; current: number }) {
@@ -101,7 +103,7 @@ export function Guide({ steps, current }: { steps: string[]; current: number }) 
     <ol className="guide" aria-label="How to answer">
       {steps.map((st, i) => (
         <li key={i} className={i < current ? 'past' : i === current ? 'now' : ''}>
-          <span className="guide-num">{i < current ? '✓' : i + 1}</span>
+          <span className="guide-num">{i < current ? <Icon name="check" label="Done" /> : i + 1}</span>
           {st}
         </li>
       ))}
@@ -308,9 +310,11 @@ function Order({ q, done, onSubmit }: Props<OrderQuestion>) {
               >
                 <span className="seq-num">{slot + 1}</span>
                 {step === undefined ? (
-                  <span className="muted">{slot === seq.length ? `Step ${slot + 1} goes here: tap it below ↓` : ' '}</span>
+                  <span className="muted">{slot === seq.length ? `Step ${slot + 1} goes here: tap it below` : ' '}</span>
                 ) : (
-                  <T>{q.steps[step]}</T>
+                  <span className="seq-text">
+                    <T>{q.steps[step]}</T>
+                  </span>
                 )}
               </button>
             </li>
@@ -372,7 +376,7 @@ function Chain({ q, done, onSubmit }: Props<ChainQuestion>) {
         return (
           <li key={s} className={`chain-step chain-${state}`}>
             <div className="chain-head">
-              <span className="chain-num">{answered ? (chosen === st.answer ? '✓' : '✗') : s + 1}</span>
+              <span className="chain-num">{answered ? <Icon name={chosen === st.answer ? 'check' : 'x'} label={chosen === st.answer ? 'Right' : 'Missed'} /> : s + 1}</span>
               <strong><T>{st.ask}</T></strong>
             </div>
             {open && (

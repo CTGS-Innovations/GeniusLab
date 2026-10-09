@@ -12,6 +12,8 @@ import { Coach } from './Coach';
 import { Scorecard } from './Scorecard';
 import { Challenge } from './Challenge';
 import { MathProvider, T } from './MathText';
+import { Icon } from './Icon';
+import { accentStyle } from './ui';
 import { Burst, buzz, useIsPhone } from './fx';
 
 export type SessionSpec =
@@ -100,6 +102,7 @@ export function Play({ spec, progress, onAnswer, onProgress, onFinish, onQuit }:
   const [pinPop, setPinPop] = useState(0);
   const lastTap = useRef(0);
   const touchY = useRef<number | null>(null);
+  const feedbackRef = useRef<HTMLDivElement>(null);
 
   const q = queue[idx];
   const limit = lightning ? LIGHTNING_SPEED_WINDOW : timeLimit(q);
@@ -111,6 +114,12 @@ export function Play({ spec, progress, onAnswer, onProgress, onFinish, onQuit }:
   const whyOrder = useMemo(() => shuffle([0, 1, 2]), [idx]);
   const reasons = q && askWhy ? [q.reason!, ...q.decoys!] : [];
   const reviewing = done && (!askWhy || whyPick !== null);
+
+  // On small screens the feedback lands below the fold: bring it (and Next) into view.
+  useEffect(() => {
+    if (!done || !isPhone) return;
+    feedbackRef.current?.scrollIntoView({ block: 'nearest', behavior: progress.settings.motion === 'full' ? 'smooth' : 'auto' });
+  }, [done, whyPick, isPhone, progress.settings.motion]);
 
   useEffect(() => {
     if (!timed) return;
@@ -213,20 +222,20 @@ export function Play({ spec, progress, onAnswer, onProgress, onFinish, onQuit }:
 
   const header = useMemo(() => {
     if (spec.type === 'lightning') {
-      return { title: '⚡ Lightning Round', sub: `${spec.lab === 'all' ? 'All labs' : labById(spec.lab).name} · speed and streaks multiply your score`, color: 'var(--gold)' };
+      return { title: 'Lightning Round', sub: `${spec.lab === 'all' ? 'All labs' : labById(spec.lab).name} · speed and streaks multiply your score`, color: 'var(--gold)' };
     }
     if (spec.type === 'board') {
       const b = progress.boards.find((x) => x.id === spec.board);
-      return { title: `${b?.emoji ?? '📌'} ${b?.name ?? 'Board'}`, sub: 'Your saved cards', color: 'var(--brand)' };
+      return { title: b?.name ?? 'Board', sub: 'Your saved cards', color: 'var(--brand)' };
     }
     if (spec.type === 'prep') {
-      return { title: '🪞 Get Ready With Me', sub: 'Your misses, open traps, and weakest skills', color: 'var(--brand)' };
+      return { title: 'Get Ready With Me', sub: 'Your misses, open traps, and weakest skills', color: 'var(--brand)' };
     }
     if (spec.type === 'swipe') {
-      return { title: '📱 Swipe Mode', sub: `${spec.lab === 'all' ? 'All labs' : labById(spec.lab).name} · answer, explain, swipe up`, color: 'var(--brand)' };
+      return { title: 'Swipe Mode', sub: `${spec.lab === 'all' ? 'All labs' : labById(spec.lab).name} · answer, explain, swipe up`, color: 'var(--brand)' };
     }
     const skill = skillById(spec.skill);
-    return { title: `${skill.icon} ${skill.name}`, sub: skill.goal, color: labById(skill.lab).color };
+    return { title: skill.name, sub: skill.goal, color: labById(skill.lab).color };
   }, [spec]);
 
   if (!q) {
@@ -283,7 +292,7 @@ export function Play({ spec, progress, onAnswer, onProgress, onFinish, onQuit }:
   return (
     <div
       className={`screen play ${swipe ? 'swipe' : ''}`}
-      style={{ ['--accent' as string]: accent }}
+      style={accentStyle(accent)}
       onTouchStart={(e) => (touchY.current = e.touches[0].clientY)}
       onTouchEnd={(e) => {
         const start = touchY.current;
@@ -297,10 +306,10 @@ export function Play({ spec, progress, onAnswer, onProgress, onFinish, onQuit }:
         <div className="play-main">
           <header className="play-top">
             <button className="btn btn-ghost" onClick={swipe ? () => finish(log, points, bestStreak) : onQuit} aria-label={swipe ? 'End and see results' : 'Quit'}>
-              ✕
+              <Icon name="close" />
             </button>
             <div className="play-title">
-              <strong>{header.title}</strong>
+              <strong title={header.title}>{header.title}</strong>
               <span className="muted">{header.sub}</span>
             </div>
             {!endless && !isPhone && (
@@ -309,14 +318,16 @@ export function Play({ spec, progress, onAnswer, onProgress, onFinish, onQuit }:
                 onClick={() => (showBrief ? dismiss(`brief-${q.skill}`) : setBriefOpen(true))}
                 title="Why this skill matters"
               >
-                ⓘ Why it matters
+                <Icon name="help" /> Why it matters
               </button>
             )}
             <div className="play-score">
               <span className="score">{points.toLocaleString()}</span>
-              <span className={`streak ${streak >= 3 ? 'hot' : ''}`}>🔥 {streak}</span>
+              <span className={`streak ${streak >= 3 ? 'hot' : ''}`} aria-label={`Streak ${streak}`}>
+                <Icon name="flame" /> {streak}
+              </span>
               {fresh && fresh.points > 0 && (
-                <span key={`fly-${log.length}-${fresh.why ? 'w' : 'a'}`} className="fly">
+                <span key={`fly-${log.length}-${fresh.why ? 'w' : 'a'}`} className="fly" aria-hidden>
                   +{fresh.why?.bonus ? fresh.why.bonus : fresh.points}
                 </span>
               )}
@@ -325,7 +336,9 @@ export function Play({ spec, progress, onAnswer, onProgress, onFinish, onQuit }:
 
           {timed && (
             <div className="clock">
-              <div className={`clock-fill ${clockFrac < 0.25 ? 'low' : ''}`} style={{ width: `${clockFrac * 100}%` }} />
+              <div className="clock-track" aria-hidden>
+                <div className={`clock-fill ${clockFrac < 0.25 ? 'low' : ''}`} style={{ width: `${clockFrac * 100}%` }} />
+              </div>
               <span className="clock-text">{clockText}s</span>
             </div>
           )}
@@ -341,11 +354,19 @@ export function Play({ spec, progress, onAnswer, onProgress, onFinish, onQuit }:
               </ol>
             )}
             {swipe && <span className="chip">#{idx + 1}</span>}
-            <span className="chip">{MODE_INFO[q.mode].icon} {MODE_INFO[q.mode].name}</span>
-            <span className="chip">{KIND_INFO[q.kind].icon} {KIND_INFO[q.kind].name}</span>
-            <span className="chip">{'★'.repeat(q.difficulty)}{'☆'.repeat(3 - q.difficulty)}</span>
-            {ALIGNMENT[q.skill] && <span className="chip">📚 {ALIGNMENT[q.skill].grade}</span>}
-            {q.trap && !questionsForSkill(q.skill).every((x) => x.trap) && <span className="chip chip-trap">⚠️ Trap ahead</span>}
+            <span className="chip">{MODE_INFO[q.mode].name}</span>
+            <span className="chip">{KIND_INFO[q.kind].name}</span>
+            <span className="chip stars" aria-label={`Difficulty ${q.difficulty} of 3`}>
+              {[1, 2, 3].map((n) => (
+                <Icon key={n} name="star" className={n <= q.difficulty ? '' : 'dim'} />
+              ))}
+            </span>
+            {ALIGNMENT[q.skill] && <span className="chip">{ALIGNMENT[q.skill].grade}</span>}
+            {q.trap && !questionsForSkill(q.skill).every((x) => x.trap) && (
+              <span className="chip chip-trap">
+                <Icon name="alert" /> Trap ahead
+              </span>
+            )}
             {streak > 0 && (
               <span className="chip chip-accent combo" style={{ ['--combo' as string]: `${Math.min(1, streak / 10) * 100}%` }}>
                 ×{streakMultiplier(streak).toFixed(1)}
@@ -353,7 +374,7 @@ export function Play({ spec, progress, onAnswer, onProgress, onFinish, onQuit }:
             )}
             {guideRetired && !done && (
               <button className="chip chip-btn" onClick={() => setGuideOpen((o) => !o)}>
-                {guideOpen ? 'Hide steps' : '? How to play'}
+                {guideOpen ? 'Hide steps' : 'How to play'}
               </button>
             )}
           </div>
@@ -371,7 +392,7 @@ export function Play({ spec, progress, onAnswer, onProgress, onFinish, onQuit }:
           >
             {pinPop > 0 && (
               <span key={`pin-${pinPop}`} className="pin-pop" aria-hidden>
-                📌
+                <Icon name="pin" />
               </span>
             )}
             <h2 className="prompt">
@@ -386,7 +407,7 @@ export function Play({ spec, progress, onAnswer, onProgress, onFinish, onQuit }:
           </div>
 
           {done && fresh && (
-            <div className={`feedback ${fresh.correct ? 'good' : 'bad'} ${lightning ? 'flash' : ''}`} aria-live="polite">
+            <div ref={feedbackRef} className={`feedback ${fresh.correct ? 'good' : 'bad'} ${lightning ? 'flash' : ''}`} aria-live="polite">
               <div className="feedback-head">
                 <strong className="verdict">
                   {fresh.correct && <Burst />}
@@ -423,7 +444,7 @@ export function Play({ spec, progress, onAnswer, onProgress, onFinish, onQuit }:
                 <div className={`why-result ${whyPick === 0 ? 'good' : 'bad'}`}>
                   {whyPick === 0 ? (
                     <strong>
-                      💡 Insight{fresh.why?.lucky ? ' ×3!' : ''} <span className="gain">+{fresh.why?.bonus}</span>
+                      <Icon name="bulb" /> Insight{fresh.why?.lucky ? ' ×3!' : ''} <span className="gain">+{fresh.why?.bonus}</span>
                     </strong>
                   ) : (
                     <strong>The rule: <T>{q.reason!}</T></strong>
@@ -439,27 +460,30 @@ export function Play({ spec, progress, onAnswer, onProgress, onFinish, onQuit }:
                     </p>
                     {q.trap && trapById(q.trap) && (
                       <p className="trap-note">
-                        <strong>⚠️ Common trap · {trapById(q.trap)!.name}.</strong> <T>{trapById(q.trap)!.tell}</T>
+                        <strong>
+                          <Icon name="alert" /> Common trap: {trapById(q.trap)!.name}.
+                        </strong>{' '}
+                        <T>{trapById(q.trap)!.tell}</T>
                       </p>
                     )}
                   </div>
                   <div className="save-wrap">
                     <button className={`btn save-btn ${saved.length ? 'on' : ''} ${!fresh.correct && !saved.length ? 'nudge' : ''}`} onClick={() => setSaveOpen((o) => !o)} aria-expanded={saveOpen}>
-                      📌 {saved.length ? 'Saved' : 'Save'}
+                      <Icon name="pin" /> {saved.length ? 'Saved' : 'Save'}
                     </button>
                     {saveOpen && (
                       <div className="save-menu" role="menu">
                         {progress.boards.map((b) => (
                           <button key={b.id} role="menuitemcheckbox" aria-checked={saved.includes(b.id)} onClick={() => onProgress((p) => toggleSaved(p, b.id, q.id))}>
-                            <span>{b.emoji} {b.name}</span>
-                            <span>{saved.includes(b.id) ? '✓' : '+'}</span>
+                            <span>{b.name}</span>
+                            <Icon name={saved.includes(b.id) ? 'check' : 'plus'} />
                           </button>
                         ))}
                       </div>
                     )}
                   </div>
                   <button className="btn btn-primary next-btn" onClick={advance} autoFocus>
-                    {!endless && idx + 1 >= queue.length ? 'See results' : swipe ? 'Next ↑' : 'Next →'}
+                    {!endless && idx + 1 >= queue.length ? 'See results' : 'Next'} <Icon name={swipe ? 'up' : 'next'} />
                   </button>
                 </div>
               )}
@@ -474,17 +498,22 @@ export function Play({ spec, progress, onAnswer, onProgress, onFinish, onQuit }:
       {isPhone && !swipe && (
         <>
           <nav className="dock" aria-label="Panels">
-            <button onClick={() => setSheet('score')}>📊 Scorecard</button>
+            <button onClick={() => setSheet('score')}>
+              <Icon name="chart" /> Scorecard
+            </button>
             <button onClick={() => setSheet('coach')}>
-              💡 Coach{cards.length > 0 && <span className="badge-dot">{cards.length}</span>}
+              <Icon name="bulb" /> Coach{cards.length > 0 && <span className="badge-dot">{cards.length}</span>}
             </button>
           </nav>
           {sheet && (
             <div className="sheet-backdrop" onClick={() => setSheet(null)}>
               <div className="sheet panel-sheet" onClick={(e) => e.stopPropagation()}>
-                <button className="btn btn-ghost sheet-close" onClick={() => setSheet(null)} aria-label="Close">
-                  ✕
-                </button>
+                <div className="sheet-head">
+                  <h2>{sheet === 'score' ? 'Scorecard' : 'Coach'}</h2>
+                  <button className="btn btn-ghost icon-btn" onClick={() => setSheet(null)} aria-label="Close">
+                    <Icon name="close" />
+                  </button>
+                </div>
                 {sheet === 'score' ? scorecard : coach}
               </div>
             </div>

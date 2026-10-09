@@ -28,7 +28,7 @@ export function Results({ summary, progress, earned, onPractice, onAgain, onDone
   return (
     <div className="screen results">
       <header className="results-head">
-        <p className="muted">{spec.type === 'lightning' ? '⚡ Lightning Round' : spec.type === 'swipe' ? '📱 Swipe Mode' : spec.type === 'board' ? '📌 Board practice' : spec.type === 'prep' ? '🪞 Get Ready With Me' : `${skill!.icon} ${skill!.name}`}</p>
+        <p className="muted">{spec.type === 'lightning' ? 'Lightning Round' : spec.type === 'swipe' ? 'Swipe Mode' : spec.type === 'board' ? 'Board practice' : spec.type === 'prep' ? 'Get Ready With Me' : skill!.name}</p>
         <h1>{grade}</h1>
         <div className="big-score">{points.toLocaleString()}</div>
         <p className="muted">points · +{points.toLocaleString()} XP</p>
@@ -46,21 +46,21 @@ export function Results({ summary, progress, earned, onPractice, onAgain, onDone
           <span className="muted small">accuracy</span>
         </div>
         <div className="stat">
-          <strong>🔥 {bestStreak}</strong>
+          <strong>{bestStreak}</strong>
           <span className="muted small">best streak</span>
         </div>
         {log.some((a) => a.why) && (
           <div className="stat">
-            <strong>💡 {log.filter((a) => a.why?.correct).length}/{log.filter((a) => a.why).length}</strong>
+            <strong>{log.filter((a) => a.why?.correct).length}/{log.filter((a) => a.why).length}</strong>
             <span className="muted small">reasons right</span>
           </div>
         )}
       </div>
 
       <div className={`card ${rankedUp ? 'rank-up' : ''}`}>
-        {rankedUp && <p className="rank-up-banner">RANK UP! {rank.icon} {rank.name}</p>}
+        {rankedUp && <p className="rank-up-banner">Rank up: {rank.name}</p>}
         <div className="rank-line">
-          <strong>{rank.icon} {rank.name}</strong>
+          <strong>{rank.name}</strong>
           <span className="muted small">{progress.xp.toLocaleString()} XP</span>
         </div>
         <Bar value={rank.progress * 100} color="var(--gold)" label="Progress to next rank" />
@@ -68,7 +68,7 @@ export function Results({ summary, progress, earned, onPractice, onAgain, onDone
 
       {earned.length > 0 && (
         <div className="card">
-          <h3>🏆 Achievement unlocked</h3>
+          <h3>Achievement unlocked</h3>
           <div className="badges">
             {earned.map((a) => (
               <div key={a.id} className="badge earned pop">
@@ -85,40 +85,40 @@ export function Results({ summary, progress, earned, onPractice, onAgain, onDone
         <div className="card advice">
           {advice.kind === 'foundation' && (
             <>
-              <h3>🧱 Strengthen the foundation</h3>
+              <h3>Strengthen the foundation</h3>
               <p>
                 Built on <strong>{advice.skill.name}</strong>. A few reps there unlock this.
               </p>
               <button className="btn btn-primary btn-block" onClick={() => onPractice(advice.skill.id)}>
-                Practice {advice.skill.icon} {advice.skill.name}
+                Practice {advice.skill.name}
               </button>
             </>
           )}
           {advice.kind === 'retry' && (
             <>
-              <h3>🔁 Run it back</h3>
+              <h3>Run it back</h3>
               <p>Review your misses. Then run it back.</p>
             </>
           )}
           {advice.kind === 'unlocked' && (
             <>
-              <h3>🔓 New skill unlocked!</h3>
+              <h3>New skill unlocked</h3>
               {advice.skills.map((s) => (
                 <button key={s.id} className="btn btn-primary btn-block" onClick={() => onPractice(s.id)}>
-                  Try {s.icon} {s.name}
+                  Try {s.name}
                 </button>
               ))}
             </>
           )}
           {advice.kind === 'push' && (
             <>
-              <h3>📈 Keep climbing</h3>
+              <h3>Keep climbing</h3>
               <p>One or two more rounds to level up.</p>
             </>
           )}
           {advice.kind === 'mastered' && (
             <>
-              <h3>🥇 Gold-level skill</h3>
+              <h3>Gold-level skill</h3>
               <p>Mastered. Keep it sharp in Lightning Rounds.</p>
             </>
           )}
@@ -129,7 +129,7 @@ export function Results({ summary, progress, earned, onPractice, onAgain, onDone
       <div className="results-side">
       {misses.length > 0 && (
         <div className="card">
-          <h3>🧩 Break it down: your misses</h3>
+          <h3>Break it down: your misses</h3>
           <ul className="review">
             {misses.map((a, i) => (
               <MathProvider key={i} on={skillById(a.q.skill).lab !== 'english'}>

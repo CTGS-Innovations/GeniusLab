@@ -2,6 +2,7 @@ import { MODE_INFO, labById, skillsForLab } from '../data';
 import { TIER_LABEL, labMastery, nextTier, stat, tierFor, type Progress } from '../engine/progress';
 import type { LabId, Mode } from '../types';
 import type { AnswerLog } from './Play';
+import { Icon } from './Icon';
 import { Bar } from './ui';
 
 interface Props {
@@ -28,9 +29,7 @@ export function Scorecard({ progress, lab, current, log, lightning }: Props) {
     <aside className="scorecard" aria-label="Foundation scorecard">
       <div className="score-head">
         <span className="why-label">Foundation scorecard</span>
-        <strong>
-          {info.icon} {info.name}
-        </strong>
+        <strong>{info.name}</strong>
         <Bar value={labMastery(progress, lab)} color={info.color} label={`${info.name} mastery`} />
         <span className="small muted">{labMastery(progress, lab)}% of the lab mastered</span>
       </div>
@@ -43,7 +42,7 @@ export function Scorecard({ progress, lab, current, log, lightning }: Props) {
             <li key={s.id} className={`${isCurrent ? 'is-current' : ''} ${tier === 'locked' ? 'is-locked' : ''}`}>
               <div className="score-skill-line">
                 <span className="score-skill-name">
-                  {tier === 'locked' ? '🔒' : s.icon} {s.name}
+                  {tier === 'locked' && <Icon name="lock" />} {s.name}
                 </span>
                 <span className={`tier tier-${tier}`}>{TIER_LABEL[tier]}</span>
               </div>
@@ -65,9 +64,7 @@ export function Scorecard({ progress, lab, current, log, lightning }: Props) {
         </strong>
         {modes.map((x) => (
           <div key={x.m} className="score-mode">
-            <span>
-              {MODE_INFO[x.m].icon} {MODE_INFO[x.m].name}
-            </span>
+            <span>{MODE_INFO[x.m].name}</span>
             <span className="muted">
               {x.right}/{x.n}
             </span>

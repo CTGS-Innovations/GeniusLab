@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { skillById } from '../data';
 import { nextTier, rankFor, type Achievement, type Progress } from '../engine/progress';
+import { Icon, type IconName } from './Icon';
 import type { SessionSummary } from './Play';
 
 interface Props {
@@ -13,6 +14,7 @@ interface Props {
 interface Slide {
   kicker: string;
   big: string;
+  icon?: IconName;
   line: string;
   tone: string;
 }
@@ -54,9 +56,10 @@ export function Recap({ summary, progress, earned, onDone }: Props) {
       <button className="recap-skip btn btn-ghost" onClick={onDone}>
         Skip
       </button>
-      <button className="recap-back" aria-label="Previous" onClick={() => setI(Math.max(0, i - 1))} />
-      <button className="recap-card" key={i} onClick={next} aria-label="Next">
+      <button className="recap-back" data-overlay aria-label="Previous" onClick={() => setI(Math.max(0, i - 1))} />
+      <button className="recap-card" key={i} onClick={next}>
         <span className="recap-kicker">{s.kicker}</span>
+        {s.icon && <Icon name={s.icon} className="recap-icon" />}
         <span className="recap-big">{s.big}</span>
         <span className="recap-line">{s.line}</span>
       </button>
@@ -74,33 +77,33 @@ function buildSlides(summary: SessionSummary, progress: Progress, earned: Achiev
       kicker: 'This round',
       big: points.toLocaleString(),
       line: `${right} of ${log.length} right · ${pct}%`,
-      tone: '#8b7bff',
+      tone: 'var(--brand)',
     },
   ];
 
   const insights = log.filter((a) => a.why?.correct);
   const lucky = log.find((a) => a.why?.lucky);
-  if (lucky) slides.push({ kicker: 'Lucky insight', big: '💡 ×3', line: `You nailed the why behind “${shorten(lucky.q.prompt)}”`, tone: '#ffc145' });
-  else if (insights.length) slides.push({ kicker: 'You explained it', big: `💡 ${insights.length}`, line: `${insights.length === 1 ? 'reason' : 'reasons'} right. That’s how it sticks.`, tone: '#ffc145' });
+  if (lucky) slides.push({ kicker: 'Lucky insight', big: '×3', icon: 'bulb', line: `You nailed the why behind “${shorten(lucky.q.prompt)}”`, tone: 'var(--gold)' });
+  else if (insights.length) slides.push({ kicker: 'You explained it', big: `${insights.length}`, icon: 'bulb', line: `${insights.length === 1 ? 'reason' : 'reasons'} right. That’s how it sticks.`, tone: 'var(--gold)' });
 
-  if (bestStreak >= 3) slides.push({ kicker: 'Best streak', big: `🔥 ${bestStreak}`, line: 'in a row without a miss', tone: '#ff7a59' });
+  if (bestStreak >= 3) slides.push({ kicker: 'Best streak', big: `${bestStreak}`, icon: 'flame', line: 'in a row without a miss', tone: 'var(--bad)' });
 
   const traps = log.flatMap((a) => (a.trapBeaten ? [a.trapBeaten] : []));
-  if (traps.length) slides.push({ kicker: 'Trap beaten', big: '🛡️', line: traps.join(' · '), tone: '#2bc48a' });
+  if (traps.length) slides.push({ kicker: 'Trap beaten', big: `${traps.length}`, icon: 'shield', line: traps.join(' · '), tone: 'var(--good)' });
 
   const terms = log.flatMap((a) => (a.term ? [a.term] : []));
-  if (terms.length) slides.push({ kicker: 'New teacher terms', big: `📘 ${terms.length}`, line: terms.slice(0, 3).join(' · '), tone: '#4f8cff' });
+  if (terms.length) slides.push({ kicker: 'New teacher terms', big: `${terms.length}`, icon: 'book', line: terms.slice(0, 3).join(' · '), tone: 'var(--brand)' });
 
-  if (earned.length) slides.push({ kicker: 'Achievement', big: earned[0].icon, line: earned[0].name, tone: '#ffc145' });
+  if (earned.length) slides.push({ kicker: 'Achievement', big: earned[0].icon, line: earned[0].name, tone: 'var(--gold)' });
 
   const rankBefore = rankFor(before.xp);
   const rank = rankFor(progress.xp);
-  if (rank.index > rankBefore.index) slides.push({ kicker: 'Rank up', big: rank.icon, line: `You’re now ${rank.name}`, tone: '#ffc145' });
+  if (rank.index > rankBefore.index) slides.push({ kicker: 'Rank up', big: rank.icon, line: `You’re now ${rank.name}`, tone: 'var(--gold)' });
 
   const skill = summary.spec.type === 'practice' ? summary.spec.skill : log[log.length - 1]?.q.skill;
   const goal = skill ? nextTier(progress, skill) : null;
   if (skill && goal)
-    slides.push({ kicker: 'Next goal', big: goal.name, line: `in ~${goal.answers} right answers on ${skillById(skill).name}`, tone: '#2bc48a' });
+    slides.push({ kicker: 'Next goal', big: goal.name, line: `in ~${goal.answers} right answers on ${skillById(skill).name}`, tone: 'var(--good)' });
 
   return slides;
 }
