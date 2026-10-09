@@ -9,7 +9,7 @@ After=network-online.target
 [Service]
 User=YOUR_USER
 WorkingDirectory=/home/YOUR_USER/projects/GeniusLab
-Environment=PORT=4173
+Environment=GL_PORT=18420
 # Environment=GL_DATA=/home/YOUR_USER/geniuslab-data
 ExecStart=/usr/bin/node server/index.mjs
 Restart=on-failure

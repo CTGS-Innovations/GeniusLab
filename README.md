@@ -25,10 +25,10 @@ Every answer comes with a short "why" explanation, so a miss turns into a lesson
 
 ```bash
 npm install
-npm run dev        # installs any missing packages, then serves http://localhost:5173
+npm run dev        # installs any missing packages, then serves http://localhost:18420
 npm test           # engine + content-integrity tests
 npm run build      # typecheck + production build into dist/
-npm start          # build, then serve app + save backup API on :4173 (see below)
+npm start          # build, then serve app + save backup API on :18420 (see below)
 npm run audit:ui   # browser check for layout bleed on every screen/theme/viewport (DESIGN.md)
 ```
 
@@ -45,7 +45,7 @@ There are no accounts. The first time the app opens, it makes a **save code** on
 ### Run it for the kids (installable app)
 
 ```bash
-npm start          # builds, then serves the app + API on http://localhost:4173 (PORT to change)
+npm start          # builds, then serves the app + API on http://localhost:18420 (GL_PORT to change)
 ```
 
 The offline app shell and "Install" only work in this built mode over **https**, which the tunnel provides. `npm run dev` also serves the API, but it skips the offline shell.
@@ -57,7 +57,9 @@ To install on a phone, open `https://geniuslab.ctgs.link`:
 
 ### Cloudflare Tunnel
 
-The dev and preview servers already allow `geniuslab.ctgs.link` and any `*.ctgs.link` host. Add others with `GL_HOSTS=a.example.com,b.example.com`. Point the tunnel at whichever port you run:
+Everything runs on one fixed port, **18420**: `npm run dev`, `npm run preview`, and `npm start`. If that port is busy, the server stops with an error instead of quietly moving to another port, so the tunnel never points at the wrong place. To use a different port, set `GL_PORT=12345`.
+
+`geniuslab.ctgs.link` and any `*.ctgs.link` host are allowed out of the box. For your own domain, add `GL_HOSTS=geniuslab.example.com`; a leading dot (`.example.com`) also allows subdomains, and `GL_HOSTS=*` allows any host. The production server (`npm start`) accepts any host.
 
 ```yaml
 # ~/.cloudflared/config.yml
@@ -65,7 +67,7 @@ tunnel: <TUNNEL_ID>
 credentials-file: /home/<you>/.cloudflared/<TUNNEL_ID>.json
 ingress:
   - hostname: geniuslab.ctgs.link
-    service: http://localhost:4173   # npm start   (use 5173 for npm run dev)
+    service: http://localhost:18420  # same port for npm start and npm run dev
   - service: http_status:404
 ```
 

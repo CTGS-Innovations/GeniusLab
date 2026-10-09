@@ -1,11 +1,11 @@
 // Production server: the built app (dist/) plus the API on one port.
-// npm start  →  build, then serve on PORT (default 4173). Point the tunnel here.
+// npm start  →  build, then serve on GL_PORT (default 18420, same as dev). Point the tunnel here.
 import { createReadStream, existsSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, join, normalize, resolve } from 'node:path';
 import { createApi } from './api.mjs';
 
-const PORT = Number(process.env.PORT) || 4173;
+const PORT = Number(process.env.GL_PORT || process.env.PORT) || 18420;
 const DIST = resolve('dist');
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -45,4 +45,9 @@ function serveStatic(req, res) {
 createServer((req, res) => {
   if ((req.url ?? '').startsWith('/api/')) return api(req, res);
   serveStatic(req, res);
-}).listen(PORT, () => console.log(`[geniuslab] http://localhost:${PORT}`));
+})
+  .on('error', (e) => {
+    console.error(e.code === 'EADDRINUSE' ? `Port ${PORT} is already in use. Stop the other server or set GL_PORT.` : e);
+    process.exit(1);
+  })
+  .listen(PORT, () => console.log(`[geniuslab] http://localhost:${PORT}`));
