@@ -12,11 +12,10 @@ interface Props {
   onChange: (s: Settings) => void;
   onClose: () => void;
   progress: Progress;
-  onImport: (p: Progress) => void;
   cloud: Cloud;
 }
 
-export function SettingsSheet({ welcome, settings, onChange, onClose, progress, onImport, cloud }: Props) {
+export function SettingsSheet({ welcome, settings, onChange, onClose, progress, cloud }: Props) {
   const set = <K extends keyof Settings>(k: K, v: Settings[K]) => onChange({ ...settings, [k]: v });
   return (
     <div className="sheet-backdrop" onClick={onClose}>
@@ -30,8 +29,6 @@ export function SettingsSheet({ welcome, settings, onChange, onClose, progress, 
             <Icon name="close" />
           </button>
         </div>
-
-        {welcome && <ProfileSection cloud={cloud} progress={progress} onImport={onImport} />}
 
         <span className="why-label">Theme</span>
         <div className="themes">
@@ -56,7 +53,7 @@ export function SettingsSheet({ welcome, settings, onChange, onClose, progress, 
           <Toggle label="Recap stories" hint="Quick highlight cards after each round." on={settings.recap} onFlip={() => set('recap', !settings.recap)} />
         </div>
 
-        {!welcome && <ProfileSection cloud={cloud} progress={progress} onImport={onImport} />}
+        <ProfileSection cloud={cloud} progress={progress} />
 
         {welcome && (
           <button className="btn btn-primary btn-block" onClick={onClose}>

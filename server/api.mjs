@@ -1,29 +1,33 @@
-// Genius Lab API: kid profiles and progress backup. Zero dependencies.
-// Storage is plain JSON on disk under GL_DATA (default ./data):
-//   config.json            family code (generated on first run unless GL_FAMILY_CODE is set)
-//   users.json             profiles: id, name, pin hash, session token hashes
-//   progress/<id>.json     latest progress
-//   progress/<id>/<ts>.json  previous versions (last KEEP_VERSIONS)
-import { createHash, randomBytes, randomInt, scryptSync, timingSafeEqual } from 'node:crypto';
+// Genius Lab API: progress backup keyed by a save code. Zero dependencies.
+//
+// A save code is 16 random Crockford base32 characters (80 bits) made on the device.
+// It is the only credential: no names, no PINs. The server stores progress under a
+// hash of the code, so the data folder never holds the codes themselves.
+//
+// Storage under GL_DATA (default ./data):
+//   saves/<sha256(code)>.json          latest progress
+//   saves/<sha256(code)>/<ts>.json     previous versions (last KEEP_VERSIONS)
+import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 const KEEP_VERSIONS = 20;
 const MAX_BODY = 2_000_000;
-const MAX_FAILS = 5;
-const LOCK_MS = 5 * 60_000;
-const NAME_RE = /^[\p{L}\p{N} _-]{1,20}$/u;
-const PIN_RE = /^\d{4,8}$/;
+const CODE_RE = /^[0-9A-HJKMNP-TV-Z]{16}$/;
+const WINDOW_MS = 10 * 60_000;
+const MAX_MISSES = 60; // unknown-code lookups per IP per window (a household shares one IP)
+const MAX_NEW = 30; // new codes per IP per window
 
 export function createApi({ dataDir = process.env.GL_DATA || 'data', log = console.log } = {}) {
-  const root = resolve(dataDir);
-  mkdirSync(join(root, 'progress'), { recursive: true });
+  const root = resolve(dataDir, 'saves');
+  mkdirSync(root, { recursive: true });
+  log(`[geniuslab] saves: ${root}`);
 
-  const readJson = (file, fallback) => {
+  const readJson = (file) => {
     try {
       return JSON.parse(readFileSync(file, 'utf8'));
     } catch {
-      return fallback;
+      return null;
     }
   };
   const writeJson = (file, value) => {
@@ -32,52 +36,33 @@ export function createApi({ dataDir = process.env.GL_DATA || 'data', log = conso
     renameSync(tmp, file);
   };
 
-  const configFile = join(root, 'config.json');
-  const config = readJson(configFile, {});
-  if (process.env.GL_FAMILY_CODE) config.familyCode = process.env.GL_FAMILY_CODE;
-  if (!config.familyCode) config.familyCode = String(randomInt(100000, 1000000));
-  writeJson(configFile, config);
-  log(`[geniuslab] family code: ${config.familyCode}  (data: ${root})`);
+  const id = (code) => createHash('sha256').update(code).digest('hex');
+  const fileFor = (code) => join(root, `${id(code)}.json`);
 
-  const usersFile = join(root, 'users.json');
-  let users = readJson(usersFile, []);
-  const saveUsers = () => writeJson(usersFile, users);
-  const fails = new Map(); // name -> { count, until }
+  // Per-IP budgets so nobody can sweep for codes or fill the disk.
+  const budgets = new Map();
+  const spend = (ip, kind, max) => {
+    const key = `${kind}:${ip}`;
+    const now = Date.now();
+    const b = budgets.get(key);
+    if (!b || b.reset < now) {
+      budgets.set(key, { n: 1, reset: now + WINDOW_MS });
+      return true;
+    }
+    b.n++;
+    return b.n <= max;
+  };
+  const ipOf = (req) => String(req.headers['cf-connecting-ip'] ?? req.socket?.remoteAddress ?? 'local');
 
-  const sha = (s) => createHash('sha256').update(s).digest('hex');
-  const hashPin = (pin, salt = randomBytes(16).toString('hex')) => `${salt}:${scryptSync(pin, salt, 32).toString('hex')}`;
-  const pinOk = (pin, stored) => {
-    const [salt, hash] = stored.split(':');
-    const a = Buffer.from(hash, 'hex');
-    const b = scryptSync(pin, salt, 32);
-    return a.length === b.length && timingSafeEqual(a, b);
-  };
-  const sameText = (a, b) => {
-    const x = Buffer.from(sha(String(a)));
-    const y = Buffer.from(sha(String(b)));
-    return timingSafeEqual(x, y);
-  };
-  const byName = (name) => users.find((u) => u.name.toLowerCase() === String(name).trim().toLowerCase());
-  const issueToken = (user) => {
-    const token = randomBytes(32).toString('hex');
-    user.tokens = [...(user.tokens ?? []), sha(token)].slice(-10);
-    saveUsers();
-    return token;
-  };
-  const authed = (req) => {
-    const m = /^Bearer ([0-9a-f]{64})$/.exec(req.headers.authorization ?? '');
-    if (!m) return null;
-    const h = sha(m[1]);
-    return users.find((u) => u.tokens?.includes(h)) ?? null;
+  const codeOf = (req) => {
+    const m = /^Bearer ([0-9A-Z]{16})$/.exec(req.headers.authorization ?? '');
+    return m && CODE_RE.test(m[1]) ? m[1] : null;
   };
 
-  const progressFile = (id) => join(root, 'progress', `${id}.json`);
-  const versionsDir = (id) => join(root, 'progress', id);
-
-  function storeProgress(user, body) {
-    const file = progressFile(user.id);
+  function store(code, body) {
+    const file = fileFor(code);
     if (existsSync(file)) {
-      const dir = versionsDir(user.id);
+      const dir = join(root, id(code));
       mkdirSync(dir, { recursive: true });
       renameSync(file, join(dir, `${Date.now()}.json`));
       const old = readdirSync(dir).sort();
@@ -116,56 +101,25 @@ export function createApi({ dataDir = process.env.GL_DATA || 'data', log = conso
   const routes = {
     'GET /api/health': () => [200, { ok: true }],
 
-    'POST /api/register': (req, body) => {
-      const name = String(body.name ?? '').trim();
-      const pin = String(body.pin ?? '');
-      if (!sameText(String(body.familyCode ?? '').trim(), config.familyCode)) return [403, { error: 'That family code isn’t right. Ask a parent.' }];
-      if (!NAME_RE.test(name)) return [400, { error: 'Use 1–20 letters or numbers for your name.' }];
-      if (!PIN_RE.test(pin)) return [400, { error: 'PIN must be 4–8 digits.' }];
-      if (byName(name)) return [409, { error: 'That name is taken. Sign in instead.' }];
-      const user = { id: randomBytes(8).toString('hex'), name, pin: hashPin(pin), created: new Date().toISOString(), tokens: [] };
-      users.push(user);
-      return [201, { token: issueToken(user), name: user.name }];
+    'GET /api/save': (req) => {
+      const code = codeOf(req);
+      if (!code) return [400, { error: 'That isn’t a save code.' }];
+      const saved = readJson(fileFor(code));
+      if (saved) return [200, saved];
+      if (!spend(ipOf(req), 'miss', MAX_MISSES)) return [429, { error: 'Too many tries. Wait a few minutes.' }];
+      // Not an error: a brand-new device simply has no save yet.
+      return [200, { progress: null, updatedAt: 0 }];
     },
 
-    'POST /api/login': (req, body) => {
-      const name = String(body.name ?? '').trim().toLowerCase();
-      const f = fails.get(name);
-      if (f && f.until > Date.now()) return [429, { error: 'Too many tries. Wait 5 minutes.' }];
-      const user = byName(name);
-      if (!user || !pinOk(String(body.pin ?? ''), user.pin)) {
-        const count = (f?.count ?? 0) + 1;
-        fails.set(name, { count, until: count >= MAX_FAILS ? Date.now() + LOCK_MS : 0 });
-        return [401, { error: 'Name or PIN doesn’t match.' }];
-      }
-      fails.delete(name);
-      return [200, { token: issueToken(user), name: user.name }];
-    },
-
-    'POST /api/logout': (req) => {
-      const user = authed(req);
-      if (user) {
-        const h = sha(req.headers.authorization.slice(7));
-        user.tokens = user.tokens.filter((t) => t !== h);
-        saveUsers();
-      }
-      return [200, { ok: true }];
-    },
-
-    'GET /api/progress': (req) => {
-      const user = authed(req);
-      if (!user) return [401, { error: 'Sign in again.' }];
-      return [200, readJson(progressFile(user.id), { progress: null, updatedAt: 0 })];
-    },
-
-    'PUT /api/progress': (req, body) => {
-      const user = authed(req);
-      if (!user) return [401, { error: 'Sign in again.' }];
+    'PUT /api/save': (req, body) => {
+      const code = codeOf(req);
+      if (!code) return [400, { error: 'That isn’t a save code.' }];
       if (!body.progress || typeof body.progress !== 'object' || typeof body.updatedAt !== 'number') return [400, { error: 'Bad progress.' }];
-      const current = readJson(progressFile(user.id), { updatedAt: 0 });
-      // An older copy never overwrites a newer one; the client pulls instead.
-      if (current.updatedAt > body.updatedAt) return [409, current];
-      storeProgress(user, { progress: body.progress, updatedAt: body.updatedAt });
+      const current = readJson(fileFor(code));
+      if (!current && !spend(ipOf(req), 'new', MAX_NEW)) return [429, { error: 'Too many new saves. Wait a few minutes.' }];
+      // An older copy never overwrites a newer one; the device pulls instead.
+      if (current && current.updatedAt > body.updatedAt) return [409, current];
+      store(code, { progress: body.progress, updatedAt: body.updatedAt });
       return [200, { updatedAt: body.updatedAt }];
     },
   };
@@ -176,7 +130,7 @@ export function createApi({ dataDir = process.env.GL_DATA || 'data', log = conso
     const route = routes[`${req.method} ${path}`];
     if (!route) return send(res, 404, { error: 'Not found' });
     try {
-      const body = req.method === 'POST' || req.method === 'PUT' ? await readBody(req) : {};
+      const body = req.method === 'PUT' ? await readBody(req) : {};
       const [status, value] = route(req, body);
       send(res, status, value);
     } catch (e) {

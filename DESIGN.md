@@ -51,7 +51,7 @@ Every value comes from a token in `:root` at the top of `src/styles.css`. Themes
   - Never as a prefix on headings, labels, buttons, or chips. The lint rejects any emoji in `src/components`.
 - **Buttons.**
   - One primary action per region.
-  - Labels are verbs ("Practice", "Create profile", "Start the clock").
+  - Labels are verbs ("Practice", "Load save", "Start the clock").
   - `.btn-ghost` is for secondary or back actions.
 - **Cards.**
   - Flat `--card` surface with a 1px `--line` border.
@@ -65,7 +65,7 @@ Every value comes from a token in `:root` at the top of `src/styles.css`. Themes
 - Lean, plain, sentence case. Bottom line first.
 - One idea per line. No run-ons, no stacked exclamation marks.
 - Teacher terms come from the Massachusetts frameworks (`src/data/curriculum.ts`), not invented labels.
-- Errors say what happened and what to do: "That family code isn't right. Ask a parent."
+- Errors say what happened and what to do: "No save found for that code."
 
 ## 5. Accessibility
 

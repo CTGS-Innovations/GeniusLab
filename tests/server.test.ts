@@ -1,19 +1,18 @@
-import { mkdtempSync, readdirSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApi } from '../server/api.mjs';
+import { formatCode, newCode, normalizeCode } from '../src/engine/cloud';
 
 let server: Server;
 let base = '';
 let dir = '';
-const FAMILY = '424242';
 
 beforeAll(async () => {
   dir = mkdtempSync(join(tmpdir(), 'gl-api-'));
-  process.env.GL_FAMILY_CODE = FAMILY;
   const api = createApi({ dataDir: dir, log: () => {} });
   server = createServer((req, res) => api(req, res));
   await new Promise<void>((ok) => server.listen(0, ok));
@@ -23,62 +22,71 @@ beforeAll(async () => {
 afterAll(() => {
   server.close();
   rmSync(dir, { recursive: true, force: true });
-  delete process.env.GL_FAMILY_CODE;
 });
 
-const post = (path: string, body: unknown, token?: string, method = 'POST') =>
-  fetch(base + path, {
-    method,
-    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+const get = (code: string) => fetch(`${base}/api/save`, { headers: { Authorization: `Bearer ${code}` } });
+const put = (code: string, body: unknown, ip = '1.1.1.1') =>
+  fetch(`${base}/api/save`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${code}`, 'cf-connecting-ip': ip },
     body: JSON.stringify(body),
   });
 
-describe('profiles and backup API', () => {
-  let token = '';
-
-  it('needs the family code to register', async () => {
-    const r = await post('/api/register', { name: 'Ava', pin: '1234', familyCode: '000000' });
-    expect(r.status).toBe(403);
+describe('save codes', () => {
+  it('are 16 Crockford base32 characters (80 bits) and never repeat', () => {
+    const codes = new Set(Array.from({ length: 2000 }, newCode));
+    expect(codes.size).toBe(2000);
+    for (const c of codes) expect(c).toMatch(/^[0-9A-HJKMNP-TV-Z]{16}$/);
   });
 
-  it('registers, then rejects a duplicate name in any case', async () => {
-    const r = await post('/api/register', { name: 'Ava', pin: '1234', familyCode: FAMILY });
-    expect(r.status).toBe(201);
-    token = (await r.json()).token;
-    expect(token).toMatch(/^[0-9a-f]{64}$/);
-    expect((await post('/api/register', { name: 'ava', pin: '9999', familyCode: FAMILY })).status).toBe(409);
+  it('accept what a kid types: lowercase, dashes, spaces, O/I/L look-alikes', () => {
+    const c = newCode();
+    expect(normalizeCode(formatCode(c).toLowerCase())).toBe(c);
+    expect(normalizeCode(' k7qf 3mzp-9wxd-2htb ')).toBe('K7QF3MZP9WXD2HTB');
+    expect(normalizeCode('O0IL-0000-0000-0000')).toBe('0011000000000000');
+    expect(normalizeCode('too-short')).toBeNull();
   });
+});
 
-  it('validates PINs and names', async () => {
-    expect((await post('/api/register', { name: 'Ben', pin: '12', familyCode: FAMILY })).status).toBe(400);
-    expect((await post('/api/register', { name: '<script>', pin: '1234', familyCode: FAMILY })).status).toBe(400);
+describe('save API', () => {
+  const code = newCode();
+
+  it('knows nothing about a code until something is saved under it', async () => {
+    expect(await (await get(code)).json()).toEqual({ progress: null, updatedAt: 0 });
+    expect((await get('not-a-code')).status).toBe(400);
   });
 
   it('saves and returns progress, and never lets an older copy overwrite a newer one', async () => {
-    expect((await fetch(`${base}/api/progress`)).status).toBe(401);
-    const empty = await (await fetch(`${base}/api/progress`, { headers: { Authorization: `Bearer ${token}` } })).json();
-    expect(empty.progress).toBeNull();
-    expect((await post('/api/progress', { progress: { version: 1, xp: 50 }, updatedAt: 200 }, token, 'PUT')).status).toBe(200);
-    const stale = await post('/api/progress', { progress: { version: 1, xp: 10 }, updatedAt: 100 }, token, 'PUT');
-    expect(stale.status).toBe(409);
-    const got = await (await fetch(`${base}/api/progress`, { headers: { Authorization: `Bearer ${token}` } })).json();
-    expect(got).toEqual({ progress: { version: 1, xp: 50 }, updatedAt: 200 });
+    expect((await put(code, { progress: { version: 1, xp: 50 }, updatedAt: 200 })).status).toBe(200);
+    expect((await put(code, { progress: { version: 1, xp: 10 }, updatedAt: 100 })).status).toBe(409);
+    expect(await (await get(code)).json()).toEqual({ progress: { version: 1, xp: 50 }, updatedAt: 200 });
   });
 
-  it('keeps previous versions', async () => {
-    await post('/api/progress', { progress: { version: 1, xp: 80 }, updatedAt: 300 }, token, 'PUT');
-    const users = readdirSync(join(dir, 'progress')).filter((f) => !f.endsWith('.json'));
-    expect(readdirSync(join(dir, 'progress', users[0])).length).toBeGreaterThan(0);
+  it('stores by hash, so the data folder never holds the code itself, and keeps old versions', async () => {
+    await put(code, { progress: { version: 1, xp: 80 }, updatedAt: 300 });
+    const saves = join(dir, 'saves');
+    const names = readdirSync(saves);
+    expect(names.join(' ')).not.toContain(code);
+    const versions = names.find((n) => !n.endsWith('.json'))!;
+    expect(readdirSync(join(saves, versions)).length).toBeGreaterThan(0);
+    expect(readFileSync(join(saves, `${versions}.json`), 'utf8')).toContain('"xp":80');
   });
 
-  it('signs in with name and PIN, and locks out after repeated wrong PINs', async () => {
-    expect((await post('/api/login', { name: 'AVA', pin: '1234' })).status).toBe(200);
-    for (let i = 0; i < 5; i++) expect((await post('/api/login', { name: 'Ava', pin: '0000' })).status).toBe(401);
-    expect((await post('/api/login', { name: 'Ava', pin: '1234' })).status).toBe(429);
+  it('rate-limits lookups of unknown codes per IP', async () => {
+    const statuses: number[] = [];
+    for (let i = 0; i < 62; i++) statuses.push((await fetch(`${base}/api/save`, { headers: { Authorization: `Bearer ${newCode()}`, 'cf-connecting-ip': '8.8.8.8' } })).status);
+    expect(statuses.slice(0, 60).every((s) => s === 200)).toBe(true);
+    expect(statuses.at(-1)).toBe(429);
   });
 
-  it('logout revokes the token', async () => {
-    await post('/api/logout', {}, token);
-    expect((await fetch(`${base}/api/progress`, { headers: { Authorization: `Bearer ${token}` } })).status).toBe(401);
+  it('rejects bad bodies', async () => {
+    expect((await put(code, { progress: null, updatedAt: 1 })).status).toBe(400);
+  });
+
+  it('rate-limits new codes per IP so nobody can fill the disk', async () => {
+    const statuses: number[] = [];
+    for (let i = 0; i < 32; i++) statuses.push((await put(newCode(), { progress: { version: 1 }, updatedAt: 1 }, '9.9.9.9')).status);
+    expect(statuses.slice(0, 30).every((s) => s === 200)).toBe(true);
+    expect(statuses.at(-1)).toBe(429);
   });
 });

@@ -81,8 +81,30 @@ export default function App() {
     if (!progress.settings.onboarded) setProgress((p) => ({ ...p, settings: { ...p.settings, onboarded: true } }));
   };
 
+  // A save link opened on a fresh device loads straight away; otherwise ask first.
+  const fresh = progress.sessions.length === 0;
+  useEffect(() => {
+    if (cloud.linked && fresh) void cloud.loadSave(cloud.linked).then((err) => (err ? window.alert(err) : cloud.dismissLink()));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cloud.linked]);
+
   return (
     <>
+      {cloud.linked && !fresh && (
+        <div className="link-banner" role="dialog" aria-label="Load save from link">
+          <span>
+            <strong>Load the save from this link?</strong> It replaces the progress on this device.
+          </span>
+          <span className="row-tight">
+            <button className="btn btn-primary" onClick={() => void cloud.loadSave(cloud.linked!).then((err) => (err ? window.alert(err) : cloud.dismissLink()))}>
+              Load save
+            </button>
+            <button className="btn btn-ghost" onClick={cloud.dismissLink}>
+              Keep this one
+            </button>
+          </span>
+        </div>
+      )}
       {renderScreen()}
       {showSettings && (
         <SettingsSheet
@@ -90,7 +112,6 @@ export default function App() {
           settings={progress.settings}
           onChange={(settings) => setProgress((p) => ({ ...p, settings }))}
           progress={progress}
-          onImport={setProgress}
           cloud={cloud}
           onClose={closeSettings}
         />

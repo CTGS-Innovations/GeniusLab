@@ -28,18 +28,19 @@ npm install
 npm run dev        # installs any missing packages, then serves http://localhost:5173
 npm test           # engine + content-integrity tests
 npm run build      # typecheck + production build into dist/
-npm start          # build, then serve app + profile API on :4173 (see below)
+npm start          # build, then serve app + save backup API on :4173 (see below)
 npm run audit:ui   # browser check for layout bleed on every screen/theme/viewport (DESIGN.md)
 ```
 
-## Profiles, backup, and the phone app
+## Save codes, backup, and the phone app
 
-Progress always saves on the device first, so the app works offline. Kids who make a **profile** (name + 4–8 digit PIN) also get a copy on your server. Sign in on any phone or laptop and the progress follows them. When two copies differ, the newer one wins. The server keeps the last 20 versions per kid in `data/progress/<id>/`.
+There are no accounts. The first time the app opens, it makes a **save code** on the device: 16 random letters and numbers, for example `K7QF-3MZP-9WXD-2HTB`. That is 80 bits, so it is longer than a YouTube video ID and can't be guessed. The code is the kid's identity and their key, so treat it like a password.
 
-- **Family code.** Making a profile needs the family code, so strangers who find the URL can't sign up. It prints when the server starts (`[geniuslab] family code: 123456`). Pin your own with `GL_FAMILY_CODE=123456`.
-- **Switching kids on one device.** Settings → Profile & backup → *Switch profile*. That clears this device, and the next kid signs in.
-- **Backup files.** Settings → *Download backup* / *Restore from file* works for guests too.
-- **Your data.** Everything lives in `./data` (set `GL_DATA` to move it). Back that folder up. It is git-ignored.
+- **Backup.** Every change saves on the device first, so the app works offline. It then backs up to your server under that code. When two copies differ, the newer one wins. The server keeps the last 20 versions of each save.
+- **New device.** Settings → *Your save* → **Copy my link** gives a link like `https://geniuslab.ctgs.link/#s=K7QF3MZP9WXD2HTB`. Open it on any phone or computer and that save loads. You can also type the code in *Use another code*, or move a *Download save file* across. A save file carries the code too.
+- **Siblings on one device.** *Start a new save* gives a fresh code. To switch back, use the other kid's link or code.
+- **Privacy.** The server stores only a hash of each code, not the code itself, and nothing else about the kid. The code sits after `#` in the link, so it never reaches server logs. Each IP is rate-limited on unknown-code lookups and on new saves.
+- **Your data.** Everything lives in `./data/saves` (set `GL_DATA` to move it). Back that folder up. It is git-ignored.
 
 ### Run it for the kids (installable app)
 

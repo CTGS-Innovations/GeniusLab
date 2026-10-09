@@ -1,13 +1,13 @@
 import { useRef, useState, type FormEvent } from 'react';
-import { exportProgress, login, readBackup, register } from '../engine/cloud';
+import { exportSave, formatCode, readSave } from '../engine/cloud';
 import { useInstall } from '../engine/install';
 import type { Progress } from '../engine/progress';
 import type { Cloud } from '../engine/useCloud';
+import { Icon } from './Icon';
 
 interface Props {
   cloud: Cloud;
   progress: Progress;
-  onImport: (p: Progress) => void;
 }
 
 const ago = (t: number) => {
@@ -15,115 +15,97 @@ const ago = (t: number) => {
   return s < 60 ? 'just now' : s < 3600 ? `${Math.round(s / 60)} min ago` : `${Math.round(s / 3600)} hr ago`;
 };
 
-export function ProfileSection({ cloud, progress, onImport }: Props) {
-  const { account, status, lastSaved } = cloud;
-  const [mode, setMode] = useState<'idle' | 'signin' | 'new'>('idle');
+export const saveLink = (code: string) => `${window.location.origin}/#s=${code}`;
+
+/** The save code: the one thing that identifies a kid's progress. No names, no PINs. */
+export function ProfileSection({ cloud, progress }: Props) {
+  const { code, status, lastSaved } = cloud;
+  const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [note, setNote] = useState('');
   const file = useRef<HTMLInputElement>(null);
-  const hasLocal = progress.sessions.length > 0;
+  const hasProgress = progress.sessions.length > 0;
+
+  async function copy(text: string, what: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setNote(`${what} copied.`);
+    } catch {
+      setNote(text);
+    }
+  }
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const f = new FormData(e.currentTarget);
-    const name = String(f.get('name') ?? '').trim();
-    const pin = String(f.get('pin') ?? '');
+    const input = String(new FormData(e.currentTarget).get('code') ?? '');
+    if (hasProgress && !window.confirm('Load that save? It replaces the progress on this device. Your current code still works anywhere.')) return;
     setBusy(true);
     setError('');
-    const r = mode === 'new' ? await register(name, pin, String(f.get('family') ?? '')) : await login(name, pin);
+    const err = await cloud.loadSave(input);
     setBusy(false);
-    if (!r.ok) return setError(r.error);
-    cloud.signIn(r.data, mode === 'new');
-    setMode('idle');
+    if (err) return setError(err);
+    setLoading(false);
+    setNote('Save loaded.');
   }
 
-  function signOut() {
-    if (status === 'offline' && !window.confirm('This device can’t reach the server, so the newest progress isn’t backed up yet. Sign out anyway?')) return;
-    cloud.signOut();
-  }
-
-  async function importFile(f: File | undefined) {
+  async function loadFile(f: File | undefined) {
     if (!f) return;
-    const p = await readBackup(f);
-    if (!p) return setNote('That file isn’t a Genius Lab backup.');
-    if (!window.confirm(`Replace current progress with this backup (${p.xp.toLocaleString()} XP)?`)) return;
-    onImport(p);
-    setNote(`Restored ${p.xp.toLocaleString()} XP from the backup.`);
+    const save = await readSave(f);
+    if (!save) return setNote('That file isn’t a Genius Lab save.');
+    if (!window.confirm(`Load this save (${save.progress.xp.toLocaleString()} XP)? It replaces the progress on this device.`)) return;
+    cloud.restore(save.progress, save.code);
+    setNote(`Loaded ${save.progress.xp.toLocaleString()} XP from the file.`);
+  }
+
+  function startNew() {
+    if (!window.confirm('Start a new save on this device? Write down or copy the current code first if you want to come back to it.')) return;
+    cloud.startNew();
+    setNote('New save started.');
   }
 
   const statusLine =
     status === 'saved'
-      ? `Backed up to the family server${lastSaved ? `, ${ago(lastSaved)}` : ''}.`
+      ? lastSaved
+        ? `Backed up ${ago(lastSaved)}.`
+        : 'Backs up as soon as you play.'
       : status === 'syncing'
         ? 'Backing up…'
-        : status === 'offline'
-          ? 'Offline. Saved on this device; backs up when you reconnect.'
-          : 'Session expired. Sign in again to keep backing up.';
+        : 'Offline. Saved on this device; backs up when it reconnects.';
 
   return (
-    <section className="settings-group" aria-labelledby="profile-h">
-      <h3 id="profile-h" className="group-title">Profile &amp; backup</h3>
+    <section className="settings-group" aria-labelledby="save-h">
+      <h3 id="save-h" className="group-title">
+        Your save
+      </h3>
+      <p className="small muted">This code is your progress. Keep it private, like a password. Open your link or enter the code on any device to pick up where you left off.</p>
 
-      {account ? (
-        <div className="profile-card">
-          <div className="profile-who">
-            <span className="avatar" aria-hidden>
-              {account.name.slice(0, 1).toUpperCase()}
-            </span>
-            <span>
-              <strong>{account.name}</strong>
-              <span className={`small sync sync-${status}`}>{statusLine}</span>
-            </span>
-          </div>
-          <div className="row-tight">
-            {(status === 'offline' || status === 'signed-out') && (
-              <button className="btn" onClick={status === 'signed-out' ? () => setMode('signin') : cloud.retry}>
-                {status === 'signed-out' ? 'Sign in' : 'Retry'}
-              </button>
-            )}
-            <button className="btn btn-ghost" onClick={signOut}>
-              Switch profile
+      <div className="save-code-card">
+        <code className="save-code" aria-label={`Save code ${formatCode(code).split('').join(' ')}`}>
+          {formatCode(code)}
+        </code>
+        <span className={`small sync sync-${status}`}>{statusLine}</span>
+        <div className="row-tight">
+          <button className="btn btn-primary" onClick={() => copy(saveLink(code), 'Link')}>
+            <Icon name="external" /> Copy my link
+          </button>
+          <button className="btn" onClick={() => copy(formatCode(code), 'Code')}>
+            Copy code
+          </button>
+          {status === 'offline' && (
+            <button className="btn btn-ghost" onClick={cloud.retry}>
+              Retry
             </button>
-          </div>
+          )}
         </div>
-      ) : (
-        mode === 'idle' && (
-          <div className="profile-card">
-            <p className="small">
-              <strong>Playing as guest.</strong> Progress lives on this device only. Make a profile to back it up and play on any device.
-            </p>
-            <div className="row-tight">
-              <button className="btn btn-primary" onClick={() => setMode('new')}>
-                New profile
-              </button>
-              <button className="btn" onClick={() => setMode('signin')}>
-                Sign in
-              </button>
-            </div>
-          </div>
-        )
-      )}
+      </div>
 
-      {mode !== 'idle' && (
+      {loading ? (
         <form className="profile-form" onSubmit={submit}>
           <label>
-            <span>Name</span>
-            <input name="name" autoComplete="username" maxLength={20} required defaultValue={account?.name ?? ''} />
+            <span>Save code</span>
+            <input name="code" autoComplete="off" autoCapitalize="characters" spellCheck={false} placeholder="XXXX-XXXX-XXXX-XXXX" required />
           </label>
-          <label>
-            <span>PIN (4–8 digits)</span>
-            <input name="pin" type="password" inputMode="numeric" pattern="\d{4,8}" autoComplete={mode === 'new' ? 'new-password' : 'current-password'} required />
-          </label>
-          {mode === 'new' && (
-            <label>
-              <span>Family code</span>
-              <input name="family" inputMode="numeric" autoComplete="off" required />
-              <span className="small muted">A parent gets this from the server window.</span>
-            </label>
-          )}
-          {mode === 'new' && hasLocal && <p className="small muted">This device’s progress moves into the new profile.</p>}
-          {mode === 'signin' && hasLocal && !account && <p className="small muted">Signing in loads that profile’s saved progress on this device.</p>}
           {error && (
             <p className="small form-error" role="alert">
               {error}
@@ -131,25 +113,35 @@ export function ProfileSection({ cloud, progress, onImport }: Props) {
           )}
           <div className="row-tight">
             <button className="btn btn-primary" type="submit" disabled={busy}>
-              {busy ? 'Checking…' : mode === 'new' ? 'Create profile' : 'Sign in'}
+              {busy ? 'Checking…' : 'Load save'}
             </button>
-            <button className="btn btn-ghost" type="button" onClick={() => setMode('idle')}>
+            <button className="btn btn-ghost" type="button" onClick={() => setLoading(false)}>
               Cancel
             </button>
           </div>
         </form>
+      ) : (
+        <div className="row-tight">
+          <button className="btn" onClick={() => setLoading(true)}>
+            Use another code
+          </button>
+          <button className="btn btn-ghost" onClick={() => exportSave(progress, code)}>
+            Download save file
+          </button>
+          <button className="btn btn-ghost" onClick={() => file.current?.click()}>
+            Load save file
+          </button>
+          <button className="btn btn-ghost" onClick={startNew}>
+            Start a new save
+          </button>
+          <input ref={file} type="file" accept="application/json,.json" hidden onChange={(e) => loadFile(e.target.files?.[0])} />
+        </div>
       )}
-
-      <div className="row-tight">
-        <button className="btn btn-ghost" onClick={() => exportProgress(progress, account?.name ?? null)}>
-          Download backup
-        </button>
-        <button className="btn btn-ghost" onClick={() => file.current?.click()}>
-          Restore from file
-        </button>
-        <input ref={file} type="file" accept="application/json,.json" hidden onChange={(e) => importFile(e.target.files?.[0])} />
-      </div>
-      {note && <p className="small muted">{note}</p>}
+      {note && (
+        <p className="small muted" role="status">
+          {note}
+        </p>
+      )}
 
       <InstallRow />
     </section>

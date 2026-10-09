@@ -1,7 +1,7 @@
 # Keeps Genius Lab running on the home server. Edit User and WorkingDirectory, then:
 #   sudo cp deploy/geniuslab.service /etc/systemd/system/
 #   sudo systemctl daemon-reload && sudo systemctl enable --now geniuslab
-#   journalctl -u geniuslab | grep "family code"
+#   journalctl -u geniuslab -f
 [Unit]
 Description=Genius Lab
 After=network-online.target
@@ -10,7 +10,7 @@ After=network-online.target
 User=YOUR_USER
 WorkingDirectory=/home/YOUR_USER/projects/GeniusLab
 Environment=PORT=4173
-# Environment=GL_FAMILY_CODE=123456
+# Environment=GL_DATA=/home/YOUR_USER/geniuslab-data
 ExecStart=/usr/bin/node server/index.mjs
 Restart=on-failure
 
