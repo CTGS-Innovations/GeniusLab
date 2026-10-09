@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { KIND_INFO, MODE_INFO, labById, skillById } from '../data';
 import { pointsFor, streakMultiplier, timeLimit } from '../engine/scoring';
 import { LIGHTNING_SECONDS, buildLightning, buildPractice } from '../engine/session';
-import { stat, termCount, type Progress } from '../engine/progress';
+import { TRAP_BEATEN_AT, stat, termCount, type Progress } from '../engine/progress';
+import { trapById } from '../data/traps';
 import { BRIEF_RETIRES_AFTER, coachCards } from '../engine/coach';
 import type { LabId, Question } from '../types';
 import { ALIGNMENT } from '../data/curriculum';
@@ -22,6 +23,7 @@ export interface AnswerLog {
   timeLeft: number;
   /** Teacher term unlocked by this answer. */
   term?: string;
+  trapBeaten?: string;
 }
 
 export interface SessionSummary {
@@ -97,14 +99,17 @@ export function Play({ spec, progress, onAnswer, onProgress, onFinish, onQuit }:
       const nextStreak = correct ? streak + 1 : 0;
       const had = progress.terms[q.skill] ?? 0;
       const term = correct && had < termCount(q.skill) ? ALIGNMENT[q.skill].terms[had] : undefined;
+      const tr = q.trap ? progress.traps[q.trap] : undefined;
+      const trapBeaten =
+        q.trap && correct && !tr?.beaten && (tr?.run ?? 0) + 1 >= TRAP_BEATEN_AT ? trapById(q.trap)?.name : undefined;
       setDone(true);
       setStreak(nextStreak);
       setBestStreak((b) => Math.max(b, nextStreak));
       setPoints((p) => p + gained);
-      setLog((l) => [...l, { q, correct, timedOut, points: gained, seconds, timeLeft, term }]);
+      setLog((l) => [...l, { q, correct, timedOut, points: gained, seconds, timeLeft, term, trapBeaten }]);
       onAnswer(q, correct, timeLeft);
     },
-    [done, qStart, limit, streak, q, onAnswer, progress.terms],
+    [done, qStart, limit, streak, q, onAnswer, progress.terms, progress.traps],
   );
 
   const advance = useCallback(() => {
@@ -215,6 +220,7 @@ export function Play({ spec, progress, onAnswer, onProgress, onFinish, onQuit }:
           <span className="chip">{KIND_INFO[q.kind].icon} {KIND_INFO[q.kind].name}</span>
           <span className="chip">{'★'.repeat(q.difficulty)}{'☆'.repeat(3 - q.difficulty)}</span>
           {ALIGNMENT[q.skill] && <span className="chip">📚 {ALIGNMENT[q.skill].grade}</span>}
+          {q.trap && <span className="chip chip-trap">⚠️ Trap ahead</span>}
           {streak > 0 && <span className="chip chip-accent">×{streakMultiplier(streak).toFixed(1)}</span>}
           {guideRetired && !done && (
             <button className="chip chip-btn" onClick={() => setGuideOpen((o) => !o)}>
@@ -239,7 +245,14 @@ export function Play({ spec, progress, onAnswer, onProgress, onFinish, onQuit }:
             </div>
             {!lightning && (
               <div className="feedback-body">
-                <p>{q.why}</p>
+                <div className="feedback-text">
+                  <p>{q.why}</p>
+                  {q.trap && trapById(q.trap) && (
+                    <p className="trap-note">
+                      <strong>⚠️ Common trap · {trapById(q.trap)!.name}.</strong> {trapById(q.trap)!.tell}
+                    </p>
+                  )}
+                </div>
                 <button className="btn btn-primary" onClick={advance} autoFocus>
                   {idx + 1 >= queue.length ? 'See results' : 'Next →'}
                 </button>

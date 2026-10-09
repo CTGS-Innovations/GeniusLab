@@ -39,6 +39,8 @@ export interface Progress {
   terms: Record<string, number>;
   /** How many times each game style has been played — how-to hints retire after a few. */
   kindsPlayed: Partial<Record<QuestionKind, number>>;
+  /** Per trap: answers seen and current run of right answers. Beaten at TRAP_BEATEN_AT in a row. */
+  traps: Record<string, { seen: number; run: number; beaten: boolean }>;
   coach: {
     /** Skills whose intro brief the student dismissed. */
     briefsDismissed: string[];
@@ -67,6 +69,7 @@ export function newProgress(): Progress {
     achievements: {},
     terms: {},
     kindsPlayed: {},
+    traps: {},
     coach: { briefsDismissed: [], off: false },
   };
 }
@@ -179,7 +182,16 @@ export function recordAnswer(p: Progress, q: Question, correct: boolean, timeLef
     missed: missed.slice(0, MAX_MISSED),
     kindsPlayed: { ...p.kindsPlayed, [q.kind]: (p.kindsPlayed[q.kind] ?? 0) + 1 },
     terms: correct ? { ...p.terms, [q.skill]: Math.min(termCount(q.skill), (p.terms[q.skill] ?? 0) + 1) } : p.terms,
+    traps: q.trap ? { ...p.traps, [q.trap]: nextTrap(p.traps[q.trap], correct) } : p.traps,
   };
+}
+
+/** A trap counts as beaten after this many right answers in a row. */
+export const TRAP_BEATEN_AT = 2;
+
+function nextTrap(t: Progress['traps'][string] | undefined, correct: boolean) {
+  const run = correct ? (t?.run ?? 0) + 1 : 0;
+  return { seen: (t?.seen ?? 0) + 1, run, beaten: (t?.beaten ?? false) || run >= TRAP_BEATEN_AT };
 }
 
 /* ---------- finishing a session ---------- */

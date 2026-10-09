@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { trapsForLab, TRAPS } from '../data/traps';
 import { LABS, MODE_INFO, skillsForLab } from '../data';
 import { ACHIEVEMENTS, RANKS, TIER_LABEL, labMastery, rankFor, stat, tierFor, type Progress } from '../engine/progress';
 import type { Mode } from '../types';
@@ -99,6 +100,36 @@ export function Growth({ progress, onBack, onReset }: Props) {
           })}
         </div>
       ))}
+
+      {TRAPS.length > 0 && (
+        <div className="card span-all">
+          <h3>
+            🛡️ Trap Vault · {TRAPS.filter((t) => progress.traps[t.id]?.beaten).length}/{TRAPS.length} beaten
+          </h3>
+          <p className="small muted">Spots where most students flip-flop. Beat one by getting it right twice in a row.</p>
+          <div className="vault">
+            {LABS.map((lab) => (
+              <div key={lab.id} className="vault-col">
+                <strong>
+                  {lab.icon} {lab.name}
+                </strong>
+                {trapsForLab(lab.id).map((t) => {
+                  const st = progress.traps[t.id];
+                  const cls = st?.beaten ? 'beaten' : st ? '' : 'unseen';
+                  return (
+                    <div key={t.id} className={`vault-item ${cls}`}>
+                      <span>
+                        {st?.beaten ? '🛡️' : st ? '⚠️' : '🔒'} <strong>{t.name}</strong>
+                      </span>
+                      {st ? <span className="muted">{t.right}</span> : <span className="muted">Not met yet · {t.grade}</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="card span-all">
         <h3>Achievements · {Object.keys(progress.achievements).length}/{ACHIEVEMENTS.length}</h3>

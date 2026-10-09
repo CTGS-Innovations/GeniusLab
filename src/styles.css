@@ -1615,9 +1615,69 @@ button:disabled.match-item {
   gap: 24px;
 }
 
-.feedback-body p {
+.feedback-text {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.feedback-text p {
   margin: 0;
+}
+
+.trap-note {
+  font-size: 0.92rem;
+  color: var(--muted);
+  padding-left: 10px;
+  border-left: 3px solid var(--gold);
+}
+
+.trap-note strong {
+  color: var(--gold);
+}
+
+.chip-trap {
+  color: var(--gold);
+  border-color: var(--gold);
+  background: rgba(255, 193, 69, 0.1);
+}
+
+/* ---------- trap vault ---------- */
+
+.vault {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.vault-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vault-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--card-2);
+  border: 1px solid var(--line);
+  font-size: 0.85rem;
+}
+
+.vault-item.beaten {
+  border-color: var(--good);
+}
+
+.vault-item.unseen {
+  opacity: 0.5;
+}
+
+.vault-item .muted {
+  font-size: 0.8rem;
 }
 
 .feedback-body .btn {

@@ -12,6 +12,8 @@ export interface CoachAnswer {
   timeLeft: number;
   /** Teacher term unlocked by this answer, if any. */
   term?: string;
+  /** Name of a common trap beaten for the first time by this answer. */
+  trapBeaten?: string;
 }
 
 export interface CoachContext {
@@ -50,6 +52,9 @@ export function coachCards(c: CoachContext): CoachCard[] {
   const prev = c.log[n - 2];
 
   // Rewards first — they are the payoff for the last answer. (New terms pop into the collection instead.)
+  if (last?.trapBeaten) {
+    cards.push({ id: `trap-${n}`, type: 'streak', title: `🛡️ Trap beaten: ${last.trapBeaten}`, text: 'Added to your Trap Vault.' });
+  }
   if (last?.correct && STREAK_MILESTONES.includes(c.streak)) {
     cards.push({
       id: `streak-${n}`,

@@ -15,6 +15,8 @@ interface QuestionBase {
   context?: string;
   /** Why the answer is right — shown as feedback after every attempt. */
   why: string;
+  /** Id of the common trap (misconception) this question tests, if any. */
+  trap?: string;
 }
 
 export interface MultipleChoiceQuestion extends QuestionBase {
