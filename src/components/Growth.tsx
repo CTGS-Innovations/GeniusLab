@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { LABS, MODE_INFO, skillsForLab } from '../data';
 import { ACHIEVEMENTS, RANKS, TIER_LABEL, labMastery, rankFor, stat, tierFor, type Progress } from '../engine/progress';
 import type { Mode } from '../types';
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export function Growth({ progress, onBack, onReset }: Props) {
+  const [armed, setArmed] = useState(false);
   const rank = rankFor(progress.xp);
   const answered = Object.values(progress.skills).reduce((n, s) => n + s.attempts, 0);
   const right = Object.values(progress.skills).reduce((n, s) => n + s.correct, 0);
@@ -115,11 +117,10 @@ export function Growth({ progress, onBack, onReset }: Props) {
 
       <button
         className="btn btn-ghost btn-block danger"
-        onClick={() => {
-          if (confirm('Erase all progress on this device? This cannot be undone.')) onReset();
-        }}
+        onClick={() => (armed ? onReset() : setArmed(true))}
+        onBlur={() => setArmed(false)}
       >
-        Reset progress
+        {armed ? 'Tap again to erase all progress' : 'Reset progress'}
       </button>
     </div>
   );
