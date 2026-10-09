@@ -823,6 +823,63 @@ button:disabled.match-item {
   margin-bottom: 2px;
 }
 
+/* ---------- why-this-matters panel ---------- */
+
+.play-main {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.why-panel {
+  border-radius: var(--radius);
+  padding: 16px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--accent);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.why-panel h3 {
+  font-size: 1.15rem;
+  margin: 0;
+  text-wrap: balance;
+}
+
+.why-panel p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.why-mode {
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+}
+
+@media (min-width: 960px) {
+  .screen.play {
+    max-width: 1080px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    align-items: start;
+    gap: 24px;
+  }
+
+  .why-panel {
+    position: sticky;
+    top: 20px;
+  }
+}
+
 /* ---------- results & growth ---------- */
 
 .results-head {

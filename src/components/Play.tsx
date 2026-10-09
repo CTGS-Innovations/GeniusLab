@@ -4,6 +4,7 @@ import { pointsFor, streakMultiplier, timeLimit } from '../engine/scoring';
 import { LIGHTNING_SECONDS, buildLightning, buildPractice } from '../engine/session';
 import type { Progress } from '../engine/progress';
 import type { LabId, Question } from '../types';
+import { MODE_WHY, SKILL_WHY } from '../data/why';
 import { Challenge } from './Challenge';
 
 export type SessionSpec = { type: 'practice'; skill: string } | { type: 'lightning'; lab: LabId | 'all' };
@@ -141,62 +142,84 @@ export function Play({ spec, progress, onAnswer, onFinish, onQuit }: Props) {
 
   return (
     <div className="screen play" style={{ ['--accent' as string]: header.color }}>
-      <div className="play-top">
-        <button className="btn btn-ghost" onClick={onQuit} aria-label="Quit">✕</button>
-        <div className="play-title">
-          <strong>{header.title}</strong>
-          <span className="muted">{header.sub}</span>
-        </div>
-        <div className="play-score">
-          <span className="score">{points.toLocaleString()}</span>
-          <span className={`streak ${streak >= 3 ? 'hot' : ''}`}>🔥 {streak}</span>
-        </div>
-      </div>
-
-      <div className="clock">
-        <div className={`clock-fill ${clockFrac < 0.25 ? 'low' : ''}`} style={{ width: `${clockFrac * 100}%` }} />
-        <span className="clock-text">{clockText}s</span>
-      </div>
-
-      <div className="play-meta">
-        {!lightning && (
-          <span>
-            {idx + 1} / {queue.length}
-          </span>
-        )}
-        <span className="chip">{MODE_INFO[q.mode].icon} {MODE_INFO[q.mode].name}</span>
-        <span className="chip">{KIND_INFO[q.kind].icon} {KIND_INFO[q.kind].name}</span>
-        <span className="chip">{'★'.repeat(q.difficulty)}{'☆'.repeat(3 - q.difficulty)}</span>
-        {streak > 0 && <span className="chip chip-accent">×{streakMultiplier(streak).toFixed(1)}</span>}
-      </div>
-
-      <div className="card challenge">
-        <h2 className="prompt">{q.prompt}</h2>
-        {q.context && <div className="context">{q.context}</div>}
-        <Challenge key={idx} q={q} done={done} onSubmit={(c) => submit(c)} />
-      </div>
-
-      {done && last && last.q.id === q.id && (
-        <div className={`feedback ${last.correct ? 'good' : 'bad'} ${lightning ? 'flash' : ''}`}>
-          <div className="feedback-head">
-            <strong>
-              {last.correct ? 'Nailed it!' : last.timedOut ? "Time's up!" : 'Not quite.'}
-            </strong>
-            {last.correct && <span className="gain">+{last.points}</span>}
+      <div className="play-main">
+        <div className="play-top">
+          <button className="btn btn-ghost" onClick={onQuit} aria-label="Quit">✕</button>
+          <div className="play-title">
+            <strong>{header.title}</strong>
+            <span className="muted">{header.sub}</span>
           </div>
-          {!lightning && (
-            <>
-              <p>
-                <span className="why-label">{last.correct ? 'Why it works' : 'Break it down'}</span>
-                {q.why}
-              </p>
-              <button className="btn btn-primary btn-block" onClick={advance} autoFocus>
-                {idx + 1 >= queue.length ? 'See results' : 'Next challenge →'}
-              </button>
-            </>
-          )}
+          <div className="play-score">
+            <span className="score">{points.toLocaleString()}</span>
+            <span className={`streak ${streak >= 3 ? 'hot' : ''}`}>🔥 {streak}</span>
+          </div>
         </div>
-      )}
+
+        <div className="clock">
+          <div className={`clock-fill ${clockFrac < 0.25 ? 'low' : ''}`} style={{ width: `${clockFrac * 100}%` }} />
+          <span className="clock-text">{clockText}s</span>
+        </div>
+
+        <div className="play-meta">
+          {!lightning && (
+            <span>
+              {idx + 1} / {queue.length}
+            </span>
+          )}
+          <span className="chip">{MODE_INFO[q.mode].icon} {MODE_INFO[q.mode].name}</span>
+          <span className="chip">{KIND_INFO[q.kind].icon} {KIND_INFO[q.kind].name}</span>
+          <span className="chip">{'★'.repeat(q.difficulty)}{'☆'.repeat(3 - q.difficulty)}</span>
+          {streak > 0 && <span className="chip chip-accent">×{streakMultiplier(streak).toFixed(1)}</span>}
+        </div>
+
+        <div className="card challenge">
+          <h2 className="prompt">{q.prompt}</h2>
+          {q.context && <div className="context">{q.context}</div>}
+          <Challenge key={idx} q={q} done={done} onSubmit={(c) => submit(c)} />
+        </div>
+
+        {done && last && last.q.id === q.id && (
+          <div className={`feedback ${last.correct ? 'good' : 'bad'} ${lightning ? 'flash' : ''}`}>
+            <div className="feedback-head">
+              <strong>
+                {last.correct ? 'Nailed it!' : last.timedOut ? "Time's up!" : 'Not quite.'}
+              </strong>
+              {last.correct && <span className="gain">+{last.points}</span>}
+            </div>
+            {!lightning && (
+              <>
+                <p>
+                  <span className="why-label">{last.correct ? 'Why it works' : 'Break it down'}</span>
+                  {q.why}
+                </p>
+                <button className="btn btn-primary btn-block" onClick={advance} autoFocus>
+                  {idx + 1 >= queue.length ? 'See results' : 'Next challenge →'}
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+
+      <WhyPanel skill={q.skill} mode={q.mode} />
     </div>
+  );
+}
+
+/** Always-on "why this matters" sidebar: the skill's founder pitch plus the current thinking move. */
+function WhyPanel({ skill, mode }: { skill: string; mode: Question['mode'] }) {
+  const why = SKILL_WHY[skill];
+  return (
+    <aside className="why-panel" aria-label="Why this matters">
+      <span className="why-label">Why this matters</span>
+      <h3>{why.headline}</h3>
+      <p>{why.body}</p>
+      <div className="why-mode">
+        <strong>
+          {MODE_INFO[mode].icon} {MODE_INFO[mode].name}
+        </strong>
+        <p>{MODE_WHY[mode]}</p>
+      </div>
+    </aside>
   );
 }

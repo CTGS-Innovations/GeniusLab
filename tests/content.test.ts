@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { LABS, QUESTIONS, SKILLS, questionsForSkill } from '../src/data';
+import { SKILL_WHY } from '../src/data/why';
 
 describe('content bank', () => {
   it('has unique question ids', () => {
@@ -28,6 +29,13 @@ describe('content bank', () => {
       expect(qs.length, s.id).toBeGreaterThanOrEqual(7);
       expect(new Set(qs.map((q) => q.difficulty)).size, s.id).toBe(3);
       expect(new Set(qs.map((q) => q.kind)).size, s.id).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it('every skill has a why-this-matters pitch', () => {
+    for (const s of SKILLS) {
+      expect(SKILL_WHY[s.id]?.headline, s.id).toBeTruthy();
+      expect(SKILL_WHY[s.id]?.body, s.id).toBeTruthy();
     }
   });
 
