@@ -42,7 +42,20 @@ export interface OrderQuestion extends QuestionBase {
   steps: string[];
 }
 
-export type Question = MultipleChoiceQuestion | SpotQuestion | MatchQuestion | OrderQuestion;
+export interface ChainStep {
+  ask: string;
+  options: string[];
+  answer: number;
+  why: string;
+}
+
+/** A multi-step word problem: break it down one decision at a time. */
+export interface ChainQuestion extends QuestionBase {
+  kind: 'chain';
+  steps: ChainStep[];
+}
+
+export type Question = MultipleChoiceQuestion | SpotQuestion | MatchQuestion | OrderQuestion | ChainQuestion;
 export type QuestionKind = Question['kind'];
 
 export interface Skill {
@@ -50,6 +63,8 @@ export interface Skill {
   lab: LabId;
   name: string;
   blurb: string;
+  /** One-line statement of exactly what the student is practicing. */
+  goal: string;
   icon: string;
   /** Skills that must reach the unlock threshold before this one opens. */
   prereqs: string[];

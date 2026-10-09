@@ -83,8 +83,9 @@ export const TIER_LABEL: Record<Tier, string> = {
   gold: 'Gold',
 };
 
+/** A skill opens once every prerequisite hits the threshold — and, once practiced, stays open. */
 export function isUnlocked(p: Progress, skill: Skill): boolean {
-  return skill.prereqs.every((id) => mastery(p, id) >= UNLOCK_AT);
+  return stat(p, skill.id).attempts > 0 || skill.prereqs.every((id) => mastery(p, id) >= UNLOCK_AT);
 }
 
 /** Depth of each skill in its lab's tree (0 = no prerequisites). */

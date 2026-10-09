@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { LABS, QUESTIONS, SKILLS, questionsForSkill } from '../src/data';
 import { SKILL_WHY } from '../src/data/why';
+import { ALIGNMENT, MILESTONES } from '../src/data/curriculum';
 
 describe('content bank', () => {
   it('has unique question ids', () => {
@@ -39,6 +40,24 @@ describe('content bank', () => {
     }
   });
 
+  it('every skill is aligned to at least one Massachusetts standard, with teacher terms', () => {
+    for (const s of SKILLS) {
+      const a = ALIGNMENT[s.id];
+      expect(a, s.id).toBeDefined();
+      expect(a.standards.length, s.id).toBeGreaterThan(0);
+      expect(a.terms.length, s.id).toBeGreaterThanOrEqual(3);
+      for (const st of a.standards) expect(st.url, s.id).toMatch(/^https:\/\/www\.doe\.mass\.edu\//);
+    }
+  });
+
+  it('every milestone points at real skills in its own lab', () => {
+    for (const [lab, m] of Object.entries(MILESTONES)) {
+      for (const level of m.levels) {
+        for (const id of level.skills) expect(SKILLS.find((s) => s.id === id)?.lab, `${lab}: ${id}`).toBe(lab);
+      }
+    }
+  });
+
   it('every lab trains all three core thinking modes', () => {
     for (const lab of LABS) {
       const modes = new Set(QUESTIONS.filter((q) => SKILLS.find((s) => s.id === q.skill)!.lab === lab.id).map((q) => q.mode));
@@ -64,6 +83,14 @@ describe('content bank', () => {
           expect(q.pairs.length, q.id).toBeGreaterThanOrEqual(3);
           expect(new Set(q.pairs.map((p) => p[0])).size, q.id).toBe(q.pairs.length);
           expect(new Set(q.pairs.map((p) => p[1])).size, q.id).toBe(q.pairs.length);
+          break;
+        case 'chain':
+          expect(q.steps.length, q.id).toBeGreaterThanOrEqual(3);
+          for (const st of q.steps) {
+            expect(st.options.length, q.id).toBeGreaterThanOrEqual(3);
+            expect(new Set(st.options).size, q.id).toBe(st.options.length);
+            expect(st.options[st.answer], q.id).toBeDefined();
+          }
           break;
         case 'order':
           expect(q.steps.length, q.id).toBeGreaterThanOrEqual(3);

@@ -2,6 +2,7 @@ import type { Question } from '../types';
 
 /** Seconds allowed per challenge. Bigger interactions get more time. */
 export function timeLimit(q: Question): number {
+  if (q.kind === 'chain') return 25 * q.steps.length;
   const base = { mc: 20, spot: 20, match: 45, order: 40 }[q.kind];
   return base + (q.difficulty - 1) * 5;
 }

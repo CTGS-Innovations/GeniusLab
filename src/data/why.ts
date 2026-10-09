@@ -28,6 +28,10 @@ export const SKILL_WHY: Record<string, Why> = {
     headline: 'Know the playbook.',
     body: 'Rules and properties are shortcuts someone already proved. Spot the pattern and you skip hours of grinding, like a founder who sees “this is a pricing problem” instead of starting from zero.',
   },
+  'm-multistep': {
+    headline: 'Big problems are just small decisions in a row.',
+    body: 'No one solves a hard problem in one move. Founders break a launch into tasks; you break a word problem into steps: what is asked, what matters, which equation, what is next. Nail each step and the big answer takes care of itself.',
+  },
   'm-functions': {
     headline: 'Read the trend, see what’s coming.',
     body: 'Graphs are how every company shows growth. Slope is speed. Curves are momentum. If you can read a function at a glance, you can read a pitch deck, a sales chart, or your own progress.',
@@ -82,7 +86,7 @@ export const SKILL_WHY: Record<string, Why> = {
   },
   's-next': {
     headline: 'Always know your next move.',
-    body: 'Strong founders never stall. They look at the evidence and pick the next experiment. Ask, test, learn, repeat. That loop is both the scientific method and the startup playbook.',
+    body: 'Strong founders never stall. They look at the evidence and pick the next experiment. Ask, test, learn, repeat. Scientists call that loop the cycle of investigation. Founders call it the playbook.',
   },
 };
 

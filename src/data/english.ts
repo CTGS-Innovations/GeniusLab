@@ -2,12 +2,12 @@ import type { Skill } from '../types';
 import { bank } from './build';
 
 export const englishSkills: Skill[] = [
-  { id: 'e-parts', lab: 'english', name: 'Subject & Verb Spotter', icon: '🎯', prereqs: [], blurb: 'Find the core of every sentence: who does what.' },
-  { id: 'e-grammar', lab: 'english', name: 'Grammar Error Hunt', icon: '🐛', prereqs: ['e-parts'], blurb: 'Pinpoint agreement, pronoun, and homophone errors.' },
-  { id: 'e-structure', lab: 'english', name: 'Paragraph Structure', icon: '🧱', prereqs: ['e-parts'], blurb: 'Topic sentence, evidence, analysis — and what does not belong.' },
-  { id: 'e-clarity', lab: 'english', name: 'Clarity Check', icon: '💡', prereqs: ['e-grammar'], blurb: 'See what makes a sentence confusing and how to fix it.' },
-  { id: 'e-openings', lab: 'english', name: 'Hooks & Thesis', icon: '🪝', prereqs: ['e-structure'], blurb: 'Recognize strong openings and arguable claims.' },
-  { id: 'e-revise', lab: 'english', name: 'Revision Moves', icon: '✂️', prereqs: ['e-clarity', 'e-openings'], blurb: 'Decide the next move that makes writing stronger.' },
+  { id: 'e-parts', lab: 'english', name: 'Subject & Verb Spotter', icon: '🎯', prereqs: [], blurb: 'Find the core of every sentence: who does what.', goal: 'Find the subject (who or what) and the verb (the action) in a sentence.' },
+  { id: 'e-grammar', lab: 'english', name: 'Grammar Error Hunt', icon: '🐛', prereqs: ['e-parts'], blurb: 'Pinpoint agreement, pronoun, and homophone errors.', goal: 'Find the grammar error: agreement, pronoun, homophone, or punctuation.' },
+  { id: 'e-structure', lab: 'english', name: 'Paragraph Structure', icon: '🧱', prereqs: ['e-parts'], blurb: 'Topic sentence, evidence, analysis — and what does not belong.', goal: 'Label each part of a paragraph: claim, evidence, reasoning, transitions.' },
+  { id: 'e-clarity', lab: 'english', name: 'Clarity Check', icon: '💡', prereqs: ['e-grammar'], blurb: 'See what makes a sentence confusing and how to fix it.', goal: 'Spot what makes a sentence unclear and choose the clearest fix.' },
+  { id: 'e-openings', lab: 'english', name: 'Hooks & Thesis', icon: '🪝', prereqs: ['e-structure'], blurb: 'Recognize strong openings and arguable claims.', goal: 'Recognize a strong hook and an arguable thesis.' },
+  { id: 'e-revise', lab: 'english', name: 'Revision Moves', icon: '✂️', prereqs: ['e-clarity', 'e-openings'], blurb: 'Decide the next move that makes writing stronger.', goal: 'Choose the revision that improves the writing the most.' },
 ];
 
 export const englishQuestions = [
@@ -61,6 +61,14 @@ export const englishQuestions = [
       why: '“Between” is a preposition, so it takes object pronouns: “between you and me.”' },
   ]),
   ...bank('e-structure', [
+    { kind: 'chain', mode: 'breakdown', difficulty: 3, prompt: 'Break down this argument one step at a time.',
+      context: 'Schools should start later in the morning. The American Academy of Pediatrics recommends that middle and high schools start at 8:30 a.m. or later. However, some parents worry that later start times will push sports practices into the evening.',
+      steps: [
+        { ask: 'Which sentence is the claim?', options: ['Schools should start later in the morning.', 'The American Academy of Pediatrics recommends…', 'However, some parents worry…', 'None of them'], why: 'It takes a position someone could disagree with.' },
+        { ask: 'What role does the “However” sentence play?', options: ['It introduces a counterclaim', 'It states the thesis', 'It is the conclusion', 'It defines a term'], why: 'A counterclaim presents the opposing side’s concern.' },
+        { ask: 'What should come next?', options: ['A rebuttal that answers the parents’ concern', 'A brand-new topic', 'Nothing; end the paragraph there', 'A second, different claim'], why: 'After a counterclaim, respond to it so your claim still stands.' },
+      ],
+      why: 'Strong arguments name the other side (counterclaim) and then answer it (rebuttal).' },
     { kind: 'order', mode: 'breakdown', difficulty: 1, prompt: 'Put this paragraph in logical order.',
       steps: ['School should start later.', 'Teens’ sleep cycles shift later during puberty.', 'Early start times cut into the sleep they need to focus.', 'A later bell would help students learn.'],
       why: 'Topic sentence → evidence → explanation → conclusion.' },
@@ -73,13 +81,13 @@ export const englishQuestions = [
     { kind: 'match', mode: 'breakdown', difficulty: 2, prompt: 'Map each transition to its purpose.',
       pairs: [['However', 'Show contrast'], ['For example', 'Introduce an illustration'], ['Therefore', 'Show a result'], ['Furthermore', 'Add another point']],
       why: 'Transitions signal the logical relationship between ideas.' },
-    { kind: 'mc', mode: 'next', difficulty: 2, context: 'Topic: Late-night phone use harms teen sleep. Evidence: Teens who use phones after 10 p.m. sleep about an hour less.', prompt: 'What should come next?',
+    { kind: 'mc', mode: 'next', difficulty: 2, context: 'Topic: Late-night phone use harms teen sleep. Evidence: Teens who use phones after 10 p.m. sleep about an hour less.', prompt: 'Which sentence should come right after the evidence?',
       options: ['Explain how losing an hour of sleep affects teens', 'Start a new topic about video games', 'Repeat the topic sentence word for word', 'Add an unrelated statistic about adults'],
       why: 'After evidence comes analysis — connect the data back to your point.' },
     { kind: 'spot', mode: 'spot', difficulty: 3, prompt: 'Tap the topic sentence.',
       tokens: ['In 1969, astronauts first walked on the Moon.', '*The Apollo program pushed technology forward in ways that still shape daily life.', 'Engineers developed lighter computer chips to fit inside spacecraft.', 'Materials designed for space suits now appear in firefighter gear.'],
       why: 'The topic sentence states the main claim the other sentences support. The first is just background.' },
-    { kind: 'mc', mode: 'breakdown', difficulty: 3, context: 'Homework should be limited. In one survey, students reported 3+ hours a night.', prompt: 'What is missing?',
+    { kind: 'mc', mode: 'breakdown', difficulty: 3, context: 'Homework should be limited. In one survey, students reported 3+ hours a night.', prompt: 'Which part of the paragraph is missing?',
       options: ['Analysis explaining why that evidence supports the claim', 'A second topic sentence', 'A transition word at the start', 'A question for the reader'],
       why: 'Evidence alone does not argue — you must explain what it proves.' },
   ]),
@@ -130,6 +138,15 @@ export const englishQuestions = [
       why: 'The thesis is the arguable claim — the first two sentences are the hook and context.' },
   ]),
   ...bank('e-revise', [
+    { kind: 'chain', mode: 'breakdown', difficulty: 3, prompt: 'Break down this paragraph one step at a time.',
+      context: 'Phones should be banned during class. Phones are bad. In a 2023 survey, 72% of teachers said phones distract students. Also, my cousin just got a new phone.',
+      steps: [
+        { ask: 'What is the claim?', options: ['Phones should be banned during class.', 'Phones are bad.', 'Teachers answered a survey.', 'My cousin got a new phone.'], why: 'The claim is the arguable position the paragraph sets out to prove.' },
+        { ask: 'Which sentence is the evidence?', options: ['The 2023 survey statistic', '“Phones are bad.”', 'The claim itself', 'The sentence about the cousin'], why: 'Evidence is a specific fact, quote, or statistic that supports the claim.' },
+        { ask: 'Which sentence should be cut?', options: ['“Also, my cousin just got a new phone.”', 'The survey sentence', 'The claim', 'None of them'], why: 'It does not support the claim, so it breaks the paragraph’s focus.' },
+        { ask: 'What is still missing?', options: ['Reasoning that explains how distraction hurts learning', 'Another personal story', 'A question for the reader', 'A longer title'], why: 'Claim → evidence → reasoning. The paragraph never explains why the evidence matters.' },
+      ],
+      why: 'Claim, evidence, reasoning: check that each part is there and that nothing off-topic sneaks in.' },
     { kind: 'spot', mode: 'spot', difficulty: 1, prompt: 'Tap the sentence that should be cut.',
       tokens: ['Electric cars produce no tailpipe emissions.', 'This helps cities reduce smog.', '*Gas stations often sell snacks.', 'Cleaner air lowers asthma rates.'],
       why: 'Off-topic sentences break the paragraph’s focus on clean air.' },

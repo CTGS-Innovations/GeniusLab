@@ -2,12 +2,12 @@ import type { Skill } from '../types';
 import { bank } from './build';
 
 export const scienceSkills: Skill[] = [
-  { id: 's-variables', lab: 'science', name: 'Variables', icon: '🎛️', prereqs: [], blurb: 'Independent, dependent, controlled — know which is which.' },
-  { id: 's-hypothesis', lab: 'science', name: 'Hypothesis & Evidence', icon: '🧪', prereqs: ['s-variables'], blurb: 'Judge testable claims and the evidence that supports them.' },
-  { id: 's-design', lab: 'science', name: 'Experimental Design', icon: '🛠️', prereqs: ['s-variables'], blurb: 'Spot what is missing from an experiment.' },
-  { id: 's-cause', lab: 'science', name: 'Cause & Reaction', icon: '⚡', prereqs: ['s-hypothesis'], blurb: 'Identify what is driving a change or reaction.' },
-  { id: 's-data', lab: 'science', name: 'Reading Data', icon: '📊', prereqs: ['s-design'], blurb: 'Read trends, outliers, and graphs without being fooled.' },
-  { id: 's-next', lab: 'science', name: 'Next Step in the Investigation', icon: '🧭', prereqs: ['s-cause', 's-data'], blurb: 'Decide what a scientist should do next — and why.' },
+  { id: 's-variables', lab: 'science', name: 'Variables', icon: '🎛️', prereqs: [], blurb: 'Independent, dependent, controlled — know which is which.', goal: 'Identify the independent, dependent, and controlled variables.' },
+  { id: 's-hypothesis', lab: 'science', name: 'Hypothesis & Evidence', icon: '🧪', prereqs: ['s-variables'], blurb: 'Judge testable claims and the evidence that supports them.', goal: 'Judge whether a hypothesis is testable and which evidence supports it.' },
+  { id: 's-design', lab: 'science', name: 'Experimental Design', icon: '🛠️', prereqs: ['s-variables'], blurb: 'Spot what is missing from an experiment.', goal: 'Find what is missing or unfair in an experiment.' },
+  { id: 's-cause', lab: 'science', name: 'Cause & Reaction', icon: '⚡', prereqs: ['s-hypothesis'], blurb: 'Identify what is driving a change or reaction.', goal: 'Identify what is causing a change or reaction.' },
+  { id: 's-data', lab: 'science', name: 'Reading Data', icon: '📊', prereqs: ['s-design'], blurb: 'Read trends, outliers, and graphs without being fooled.', goal: 'Read a trend, an outlier, or a graph correctly.' },
+  { id: 's-next', lab: 'science', name: 'Next Step in the Investigation', icon: '🧭', prereqs: ['s-cause', 's-data'], blurb: 'Decide what a scientist should do next — and why.', goal: 'Choose the next logical step in an investigation.' },
 ];
 
 export const scienceQuestions = [
@@ -58,7 +58,16 @@ export const scienceQuestions = [
       why: 'Correlation is not causation — look for a third variable.' },
   ]),
   ...bank('s-design', [
-    { kind: 'mc', mode: 'spot', difficulty: 1, context: 'A student gives plants a new fertilizer and they grow tall.', prompt: 'What is missing?',
+    { kind: 'chain', mode: 'breakdown', difficulty: 2, prompt: 'Break down this investigation one step at a time.',
+      context: 'Jayden thinks a new sports drink helps runners recover faster. He gives the drink to three friends after a run, and they say they feel great.',
+      steps: [
+        { ask: 'What claim is being tested?', options: ['The drink makes runners recover faster', 'Running is healthy', 'His friends like the drink’s taste', 'Sports drinks are popular'], why: 'The claim links a cause (the drink) to an effect (faster recovery).' },
+        { ask: 'What is the biggest flaw?', options: ['There is no control group to compare against', 'The drink is the wrong color', 'The run was too short', 'It happened on a weekday'], why: 'Without runners who did not get the drink, there is nothing to compare.' },
+        { ask: 'What should he measure instead of “feel great”?', options: ['A number, such as heart-rate recovery time', 'How happy they look', 'Their favorite flavor', 'Nothing; feelings are enough'], why: 'Quantitative data can be compared fairly. Opinions cannot.' },
+        { ask: 'What is the best redesign?', options: ['Randomly give half the runners the drink and half water, run the same course, and compare recovery times', 'Give everyone the drink', 'Ask more friends how they feel', 'Test only the fastest runner'], why: 'Random assignment, a control group, and a measurable outcome make a fair test.' },
+      ],
+      why: 'A fair test needs a clear claim, a control group, measurable data, and random assignment.' },
+    { kind: 'mc', mode: 'spot', difficulty: 1, context: 'A student gives plants a new fertilizer and they grow tall.', prompt: 'Which part of a fair experiment is missing?',
       options: ['A control group with no fertilizer', 'A title for the experiment', 'A colorful graph', 'More fertilizer'],
       why: 'Without a comparison group, you cannot tell if the plants would have grown tall anyway.' },
     { kind: 'order', mode: 'breakdown', difficulty: 1, prompt: 'Order the steps of a scientific investigation.',
@@ -127,7 +136,16 @@ export const scienceQuestions = [
       why: 'A truncated axis exaggerates differences — always check where the axis starts.' },
   ]),
   ...bank('s-next', [
-    { kind: 'mc', mode: 'next', difficulty: 1, context: 'Question: Does music help plants grow?', prompt: 'What is the next step?',
+    { kind: 'chain', mode: 'breakdown', difficulty: 3, prompt: 'Break down this investigation one step at a time.',
+      context: 'Ice in a cup melted faster on a sunny windowsill than on the kitchen counter. Maya concludes that sunlight caused the faster melting.',
+      steps: [
+        { ask: 'What is the independent variable in Maya’s comparison?', options: ['Where the cup sat (sunny windowsill vs. counter)', 'How long the ice took to melt', 'The size of the cup', 'The amount of ice'], why: 'Location is what differed between the two cups on purpose.' },
+        { ask: 'What else differs between the two spots that could matter?', options: ['The air temperature near the window', 'The color of the ice', 'The day of the week', 'Nothing else'], why: 'Warmer air near the window is a second variable, so sunlight is not the only possible cause.' },
+        { ask: 'What is the best next step?', options: ['Test at the same air temperature, with and without direct sunlight', 'Accept the conclusion', 'Switch to different cup sizes', 'Stop the investigation'], why: 'Control the air temperature so sunlight is the only thing that changes.' },
+        { ask: 'How can she make the result trustworthy?', options: ['Run several trials and average the melting times', 'Do it once very carefully', 'Record only the fastest melt', 'Ask friends to guess'], why: 'Repeated trials reduce the effect of random error.' },
+      ],
+      why: 'Before trusting a cause, rule out other variables and repeat the test.' },
+    { kind: 'mc', mode: 'next', difficulty: 1, context: 'Question: Does music help plants grow?', prompt: 'Which step of the investigation comes next?',
       options: ['Form a testable hypothesis', 'Write the conclusion', 'Publish the results', 'Graph the data'],
       why: 'After a question comes a prediction you can test.' },
     { kind: 'order', mode: 'next', difficulty: 2, prompt: 'Does water temperature affect how fast salt dissolves? Order the next steps.',

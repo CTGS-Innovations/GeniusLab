@@ -1,3 +1,4 @@
+import { ALIGNMENT, MILESTONES, SOURCES } from '../data/curriculum';
 import { labById, questionsForSkill, skillById, skillsForLab } from '../data';
 import { TIER_LABEL, UNLOCK_AT, labMastery, mastery, skillDepth, stat, suggestedSkill, tierFor, type Progress } from '../engine/progress';
 import type { LabId } from '../types';
@@ -57,6 +58,7 @@ export function LabView({ lab: labId, progress, onPractice, onBack }: Props) {
                       <span className={`tier tier-${tier}`}>{TIER_LABEL[tier]}</span>
                     </div>
                     <strong>{s.name}</strong>
+                    <span className="grade-tag">📚 {ALIGNMENT[s.id].grade}</span>
                     <span className="small muted">{locked ? `Unlock: ${needs.join(' + ')}` : s.blurb}</span>
                     {!locked && (
                       <>
@@ -73,6 +75,50 @@ export function LabView({ lab: labId, progress, onPractice, onBack }: Props) {
           </div>
         ))}
       </div>
+
+      <h3 className="section-title">Milestones by grade</h3>
+      <p className="muted small">
+        Mapped to the Massachusetts Curriculum Framework. {MILESTONES[labId].note}
+      </p>
+      <ol className="milestones">
+        {MILESTONES[labId].levels.map((m) => (
+          <li key={m.level} className="card milestone">
+            <strong>{m.level}</strong>
+            <ul className="domains">
+              {m.domains.map((d) => (
+                <li key={d}>{d}</li>
+              ))}
+            </ul>
+            {m.skills.length ? (
+              <div className="milestone-skills">
+                {m.skills.map((id) => {
+                  const sk = skillById(id);
+                  const tier = tierFor(progress, sk);
+                  return (
+                    <button key={id} className="milestone-skill" disabled={tier === 'locked'} onClick={() => onPractice(id)}>
+                      {tier === 'locked' ? '🔒' : sk.icon} {sk.name}
+                      <span className={`tier tier-${tier}`}>{TIER_LABEL[tier]}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <span className="small muted">Genius Lab skills for this course are coming next.</span>
+            )}
+          </li>
+        ))}
+      </ol>
+      <p className="small muted sources">
+        Sources:{' '}
+        {SOURCES.map((src, i) => (
+          <span key={src.url}>
+            {i > 0 && ' · '}
+            <a href={src.url} target="_blank" rel="noreferrer">
+              {src.name}
+            </a>
+          </span>
+        ))}
+      </p>
     </div>
   );
 }

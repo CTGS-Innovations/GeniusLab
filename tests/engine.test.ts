@@ -75,6 +75,11 @@ describe('mastery & unlocks', () => {
     expect(isUnlocked(withMastery({ 'm-rules': 60, 'm-word': 55 }), fn)).toBe(true);
   });
 
+  it('keeps a practiced skill unlocked even if a prerequisite dips', () => {
+    const p = withMastery({ 'm-order': 30, 'm-inverse': 40 });
+    expect(isUnlocked(p, skillById('m-inverse'))).toBe(true);
+  });
+
   it('routes a struggling student to their weakest prerequisite', () => {
     const p = withMastery({ 'm-rules': 70, 'm-word': 52 });
     const advice = adviceAfter(p, p, skillById('m-functions'), 0.4);

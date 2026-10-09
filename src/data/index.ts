@@ -28,4 +28,5 @@ export const KIND_INFO = {
   spot: { name: 'Tap It', icon: '👆' },
   match: { name: 'Mapping', icon: '🔗' },
   order: { name: 'Sequence', icon: '🔢' },
+  chain: { name: 'Multi-Step', icon: '🪜' },
 } as const;

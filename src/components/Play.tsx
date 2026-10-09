@@ -4,7 +4,9 @@ import { pointsFor, streakMultiplier, timeLimit } from '../engine/scoring';
 import { LIGHTNING_SECONDS, buildLightning, buildPractice } from '../engine/session';
 import type { Progress } from '../engine/progress';
 import type { LabId, Question } from '../types';
+import { ALIGNMENT } from '../data/curriculum';
 import { MODE_WHY, SKILL_WHY } from '../data/why';
+import { Scorecard } from './Scorecard';
 import { Challenge } from './Challenge';
 
 export type SessionSpec = { type: 'practice'; skill: string } | { type: 'lightning'; lab: LabId | 'all' };
@@ -75,11 +77,13 @@ export function Play({ spec, progress, onAnswer, onFinish, onQuit }: Props) {
   );
 
   const submit = useCallback(
-    (correct: boolean, timedOut = false) => {
+    (correct: boolean, timedOut = false, fraction = correct ? 1 : 0) => {
       if (done || finished.current) return;
       const seconds = (performance.now() - qStart) / 1000;
       const timeLeft = Math.max(0, 1 - seconds / limit);
-      const gained = pointsFor(correct, timeLeft, streak, q.difficulty);
+      const gained = correct
+        ? pointsFor(true, timeLeft, streak, q.difficulty)
+        : Math.round(pointsFor(true, timeLeft, 0, q.difficulty) * fraction * 0.5);
       const nextStreak = correct ? streak + 1 : 0;
       setDone(true);
       setStreak(nextStreak);
@@ -169,22 +173,26 @@ export function Play({ spec, progress, onAnswer, onFinish, onQuit }: Props) {
           <span className="chip">{MODE_INFO[q.mode].icon} {MODE_INFO[q.mode].name}</span>
           <span className="chip">{KIND_INFO[q.kind].icon} {KIND_INFO[q.kind].name}</span>
           <span className="chip">{'★'.repeat(q.difficulty)}{'☆'.repeat(3 - q.difficulty)}</span>
+          {ALIGNMENT[q.skill] && <span className="chip">📚 {ALIGNMENT[q.skill].grade}</span>}
           {streak > 0 && <span className="chip chip-accent">×{streakMultiplier(streak).toFixed(1)}</span>}
         </div>
 
         <div className="card challenge">
+          <p className="goal">
+            <span>🎯 Goal</span> {skillById(q.skill).goal}
+          </p>
           <h2 className="prompt">{q.prompt}</h2>
           {q.context && <div className="context">{q.context}</div>}
-          <Challenge key={idx} q={q} done={done} onSubmit={(c) => submit(c)} />
+          <Challenge key={idx} q={q} done={done} onSubmit={(c, f) => submit(c, false, f)} />
         </div>
 
         {done && last && last.q.id === q.id && (
           <div className={`feedback ${last.correct ? 'good' : 'bad'} ${lightning ? 'flash' : ''}`}>
             <div className="feedback-head">
               <strong>
-                {last.correct ? 'Nailed it!' : last.timedOut ? "Time's up!" : 'Not quite.'}
+                {last.correct ? 'Nailed it!' : last.timedOut ? "Time's up!" : last.points > 0 ? 'Partly there.' : 'Not quite.'}
               </strong>
-              {last.correct && <span className="gain">+{last.points}</span>}
+              {last.points > 0 && <span className="gain">+{last.points}</span>}
             </div>
             {!lightning && (
               <>
@@ -202,19 +210,56 @@ export function Play({ spec, progress, onAnswer, onFinish, onQuit }: Props) {
       </div>
 
       <WhyPanel skill={q.skill} mode={q.mode} />
+      <Scorecard progress={progress} lab={skillById(q.skill).lab} current={q.skill} log={log} streak={streak} />
     </div>
   );
 }
 
-/** Always-on "why this matters" sidebar: the skill's founder pitch plus the current thinking move. */
+/** Always-on bottom-line-up-front card: same rows, same order, every challenge. */
 function WhyPanel({ skill, mode }: { skill: string; mode: Question['mode'] }) {
   const why = SKILL_WHY[skill];
+  const align = ALIGNMENT[skill];
   return (
     <aside className="why-panel" aria-label="Why this matters">
-      <span className="why-label">Why this matters</span>
-      <h3>{why.headline}</h3>
-      <p>{why.body}</p>
-      <div className="why-mode">
+      <div className="why-row">
+        <span className="why-label">Bottom line</span>
+        <h3>{why.headline}</h3>
+      </div>
+      <div className="why-row">
+        <span className="why-label">Why it matters</span>
+        <p>{why.body}</p>
+      </div>
+      {align && align.terms.length > 0 && (
+        <div className="why-row">
+          <span className="why-label">Also called</span>
+          <div className="terms">
+            {align.terms.map((t) => (
+              <span key={t} className="term">{t}</span>
+            ))}
+          </div>
+        </div>
+      )}
+      {align && (
+        <div className="why-row">
+          <span className="why-label">Grade &amp; standard</span>
+          <p className="grade">
+            {align.grade}
+            {align.foundation && <span className="muted"> · builds on {align.foundation}</span>}
+          </p>
+          <ul className="standards">
+            {align.standards.map((st, i) => (
+              <li key={i}>
+                <a href={st.url} target="_blank" rel="noreferrer">
+                  <strong>{st.code}</strong>
+                </a>{' '}
+                <span className="muted">{st.text}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <div className="why-row why-mode">
+        <span className="why-label">Your move</span>
         <strong>
           {MODE_INFO[mode].icon} {MODE_INFO[mode].name}
         </strong>
