@@ -17,6 +17,10 @@ interface QuestionBase {
   why: string;
   /** Id of the common trap (misconception) this question tests, if any. */
   trap?: string;
+  /** The principle that makes the answer right, for the "Why?" follow-up. Short fragment. */
+  reason?: string;
+  /** Two plausible but wrong reasons (real misconceptions) for the "Why?" follow-up. */
+  decoys?: [string, string];
 }
 
 export interface MultipleChoiceQuestion extends QuestionBase {

@@ -7,6 +7,8 @@ interface DraftBase {
   context?: string;
   why: string;
   trap?: string;
+  reason?: string;
+  decoys?: [string, string];
 }
 
 /**
