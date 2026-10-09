@@ -25,7 +25,7 @@ Every answer comes with a short "why" explanation, so a miss turns into a lesson
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173
+npm run dev        # installs any missing packages, then serves http://localhost:5173
 npm test           # engine + content-integrity tests
 npm run build      # typecheck + production build into dist/
 ```
