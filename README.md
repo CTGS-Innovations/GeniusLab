@@ -52,3 +52,14 @@ Add an entry to the right skill's `bank(...)` call in `src/data/<lab>.ts`:
 - **Mapping:** list the pairs already matched.
 
 `npm test` checks that every skill still has enough challenges, covers all three difficulties, and uses at least two game styles.
+
+### Writing formulas
+
+Math and Science text is rendered for readability: `a/b` becomes a stacked fraction, operators get spacing, single-letter variables are set in italic serif, and `²`, `⁻¹`, `₂` become real superscripts and subscripts. When authoring:
+
+- Use the real minus sign `−` (not a hyphen) and `×` / `÷` for operations.
+- Write fractions as `a/b`, grouping multi-term parts in parentheses: `(x + 6)/(x + 3)`.
+- Use Unicode exponents (`x²`, `2⁻³`) and subscripts (`CO₂`, `y₁`).
+- Write units as words or abbreviations that aren't single letters (`hr`, not `h`).
+
+Fonts: Atkinson Hyperlegible (Braille Institute) for text, Lexend digits (an open, unslashed 0), and Noto Serif italic for variables. All are bundled, so the app works offline.

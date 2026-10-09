@@ -1,4 +1,5 @@
 import { skillById } from '../data';
+import { MathProvider, T } from './MathText';
 import { adviceAfter, rankFor, type Achievement, type Progress } from '../engine/progress';
 import type { SessionSummary } from './Play';
 import { Bar } from './ui';
@@ -125,11 +126,13 @@ export function Results({ summary, progress, earned, onPractice, onAgain, onDone
           <h3>🧩 Break it down: your misses</h3>
           <ul className="review">
             {misses.map((a, i) => (
-              <li key={i}>
-                <strong>{a.q.prompt}</strong>
-                {a.q.context && <div className="context small">{a.q.context}</div>}
-                <p className="small">{a.q.why}</p>
+              <MathProvider key={i} on={skillById(a.q.skill).lab !== 'english'}>
+              <li>
+                <strong><T>{a.q.prompt}</T></strong>
+                {a.q.context && <div className="context small"><T>{a.q.context}</T></div>}
+                <p className="small"><T>{a.q.why}</T></p>
               </li>
+              </MathProvider>
             ))}
           </ul>
         </div>

@@ -11,6 +11,7 @@ import { HOWTO_LIMIT } from '../data/why';
 import { Coach } from './Coach';
 import { Scorecard } from './Scorecard';
 import { Challenge } from './Challenge';
+import { MathProvider, T } from './MathText';
 
 export type SessionSpec = { type: 'practice'; skill: string } | { type: 'lightning'; lab: LabId | 'all' };
 
@@ -179,6 +180,7 @@ export function Play({ spec, progress, onAnswer, onProgress, onFinish, onQuit }:
     <div className="screen play" style={{ ['--accent' as string]: header.color }}>
       <Scorecard progress={progress} lab={skillById(q.skill).lab} current={q.skill} log={log} lightning={lightning} />
 
+      <MathProvider on={skillById(q.skill).lab !== 'english'}>
       <div className="play-main">
         <header className="play-top">
           <button className="btn btn-ghost" onClick={onQuit} aria-label="Quit">✕</button>
@@ -230,8 +232,8 @@ export function Play({ spec, progress, onAnswer, onProgress, onFinish, onQuit }:
         </div>
 
         <div className={`card challenge ${guideRetired && !guideOpen ? 'no-guide' : ''}`}>
-          <h2 className="prompt">{q.prompt}</h2>
-          {q.context && <div className="context">{q.context}</div>}
+          <h2 className="prompt"><T>{q.prompt}</T></h2>
+          {q.context && <div className="context"><T>{q.context}</T></div>}
           <Challenge key={idx} q={q} done={done} onSubmit={(c, f) => submit(c, false, f)} />
         </div>
 
@@ -246,10 +248,10 @@ export function Play({ spec, progress, onAnswer, onProgress, onFinish, onQuit }:
             {!lightning && (
               <div className="feedback-body">
                 <div className="feedback-text">
-                  <p>{q.why}</p>
+                  <p><T>{q.why}</T></p>
                   {q.trap && trapById(q.trap) && (
                     <p className="trap-note">
-                      <strong>⚠️ Common trap · {trapById(q.trap)!.name}.</strong> {trapById(q.trap)!.tell}
+                      <strong>⚠️ Common trap · {trapById(q.trap)!.name}.</strong> <T>{trapById(q.trap)!.tell}</T>
                     </p>
                   )}
                 </div>
@@ -261,6 +263,7 @@ export function Play({ spec, progress, onAnswer, onProgress, onFinish, onQuit }:
           </div>
         )}
       </div>
+      </MathProvider>
 
       <Coach
         cards={cards}

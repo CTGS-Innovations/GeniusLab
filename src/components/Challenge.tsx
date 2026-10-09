@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { shuffle } from '../engine/session';
+import { T } from './MathText';
 import type { ChainQuestion, MatchQuestion, MultipleChoiceQuestion, OrderQuestion, Question, SpotQuestion } from '../types';
 
 interface Props<Q extends Question> {
@@ -59,7 +60,7 @@ function MultipleChoice({ q, done, onSubmit }: Props<MultipleChoiceQuestion>) {
           }}
         >
           <span className="choice-key">{'ABCD'[pos]}</span>
-          <span>{q.options[i]}</span>
+          <span><T>{q.options[i]}</T></span>
         </button>
       ))}
       </div>
@@ -84,7 +85,7 @@ function Spot({ q, done, onSubmit }: Props<SpotQuestion>) {
             onSubmit(i === q.answer);
           }}
         >
-          {t}
+          <T>{t}</T>
         </button>
       ))}
       </div>
@@ -237,7 +238,7 @@ function Match({ q, done, onSubmit }: Props<MatchQuestion>) {
                 setActive(active === l ? null : l);
               }}
             >
-              {left}
+              <T>{left}</T>
             </button>
           ))}
         </div>
@@ -257,7 +258,7 @@ function Match({ q, done, onSubmit }: Props<MatchQuestion>) {
                 disabled={done}
                 onClick={() => active !== null && connect(active, r)}
               >
-                {q.pairs[r][1]}
+                <T>{q.pairs[r][1]}</T>
               </button>
             );
           })}
@@ -267,7 +268,7 @@ function Match({ q, done, onSubmit }: Props<MatchQuestion>) {
         <ul className="reveal">
           {q.pairs.map(([a, b]) => (
             <li key={a}>
-              <strong>{a}</strong> → {b}
+              <strong><T>{a}</T></strong> → <T>{b}</T>
             </li>
           ))}
         </ul>
@@ -309,7 +310,7 @@ function Order({ q, done, onSubmit }: Props<OrderQuestion>) {
                 {step === undefined ? (
                   <span className="muted">{slot === seq.length ? `Step ${slot + 1} goes here: tap it below ↓` : ' '}</span>
                 ) : (
-                  q.steps[step]
+                  <T>{q.steps[step]}</T>
                 )}
               </button>
             </li>
@@ -322,7 +323,7 @@ function Order({ q, done, onSubmit }: Props<OrderQuestion>) {
             .filter((i) => !seq.includes(i))
             .map((i) => (
               <button key={i} className="token" onClick={() => setSeq([...seq, i])}>
-                {q.steps[i]}
+                <T>{q.steps[i]}</T>
               </button>
             ))}
         </div>
@@ -331,7 +332,7 @@ function Order({ q, done, onSubmit }: Props<OrderQuestion>) {
         !(complete && seq.every((s, i) => s === i)) && (
           <ol className="reveal">
             {q.steps.map((s) => (
-              <li key={s}>{s}</li>
+              <li key={s}><T>{s}</T></li>
             ))}
           </ol>
         )
@@ -372,14 +373,14 @@ function Chain({ q, done, onSubmit }: Props<ChainQuestion>) {
           <li key={s} className={`chain-step chain-${state}`}>
             <div className="chain-head">
               <span className="chain-num">{answered ? (chosen === st.answer ? '✓' : '✗') : s + 1}</span>
-              <strong>{st.ask}</strong>
+              <strong><T>{st.ask}</T></strong>
             </div>
             {open && (
               <div className="choices">
                 {orders[s].map((i, pos) => (
                   <button key={i} className="choice" onClick={() => pick(i)}>
                     <span className="choice-key">{'ABCD'[pos]}</span>
-                    <span>{st.options[i]}</span>
+                    <span><T>{st.options[i]}</T></span>
                   </button>
                 ))}
               </div>
@@ -388,11 +389,11 @@ function Chain({ q, done, onSubmit }: Props<ChainQuestion>) {
               <p className="chain-why small">
                 {answered && chosen !== st.answer && (
                   <>
-                    <span className="chain-pick">You picked: {st.options[chosen]}</span>
+                    <span className="chain-pick">You picked: <T>{st.options[chosen]}</T></span>
                     <br />
                   </>
                 )}
-                <strong>{st.options[st.answer]}</strong> — {st.why}
+                <strong><T>{st.options[st.answer]}</T></strong> — <T>{st.why}</T>
               </p>
             )}
           </li>

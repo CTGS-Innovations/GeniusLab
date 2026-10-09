@@ -178,7 +178,7 @@ export const mathQuestions = [
   ...bank('m-multistep', [
     { kind: 'mc', trap: 'avg-rate', mode: 'breakdown', difficulty: 2, context: 'You bike 30 miles to a lake at 15 mph and 30 miles back at 10 mph.', prompt: 'What is your average speed for the round trip?',
       options: ['12 mph', '12.5 mph', '25 mph', '10 mph'],
-      why: 'Times: 2 h + 3 h = 5 h. Total 60 miles ÷ 5 h = 12 mph.' },
+      why: 'Times: 2 hr + 3 hr = 5 hr. Total 60 miles ÷ 5 hr = 12 mph.' },
     { kind: 'mc', trap: 'avg-rate', mode: 'breakdown', difficulty: 3, context: 'A car drives 1 hour at 60 mph, then 1 hour at 40 mph.', prompt: 'What is its average speed?',
       options: ['50 mph', '48 mph', '100 mph', '24 mph'],
       why: 'Equal times, so total ÷ time = 100 ÷ 2 = 50 mph. Equal distances would give 48.' },
