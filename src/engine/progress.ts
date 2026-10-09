@@ -52,6 +52,8 @@ export interface Progress {
   insights: number;
   /** Saved cards, Pinterest-style. */
   boards: Board[];
+  /** When this copy last changed (ms). The newer copy wins between device and server. */
+  updatedAt: number;
 }
 
 export interface Board {
@@ -127,6 +129,7 @@ export function newProgress(): Progress {
     settings: { ...DEFAULT_SETTINGS },
     insights: 0,
     boards: DEFAULT_BOARDS.map((b) => ({ ...b, items: [] })),
+    updatedAt: 0,
   };
 }
 
@@ -377,16 +380,18 @@ export const ACHIEVEMENTS: Achievement[] = [
 
 const KEY = 'geniuslab.progress.v1';
 
+/** Accept progress from storage, the server, or a backup file. Null if it isn't Genius Lab progress. */
+export function normalizeProgress(raw: unknown): Progress | null {
+  if (!raw || typeof raw !== 'object' || (raw as Progress).version !== 1) return null;
+  const parsed = raw as Progress;
+  const base = newProgress();
+  return { ...base, ...parsed, settings: { ...base.settings, ...parsed.settings }, updatedAt: Number(parsed.updatedAt) || 0 };
+}
+
 export function loadProgress(): Progress {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw) as Progress;
-      if (parsed.version === 1) {
-        const base = newProgress();
-        return { ...base, ...parsed, settings: { ...base.settings, ...parsed.settings } };
-      }
-    }
+    if (raw) return normalizeProgress(JSON.parse(raw)) ?? newProgress();
   } catch {
     // storage unavailable or corrupt — start fresh
   }

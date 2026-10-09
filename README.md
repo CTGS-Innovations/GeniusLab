@@ -28,9 +28,50 @@ npm install
 npm run dev        # installs any missing packages, then serves http://localhost:5173
 npm test           # engine + content-integrity tests
 npm run build      # typecheck + production build into dist/
+npm start          # build, then serve app + profile API on :4173 (see below)
 ```
 
-Progress is stored in the browser (`localStorage`), so no backend is needed.
+## Profiles, backup, and the phone app
+
+Progress always saves on the device first, so the app works offline. Kids who make a **profile** (name + 4–8 digit PIN) also get a copy on your server. Sign in on any phone or laptop and the progress follows them. When two copies differ, the newer one wins. The server keeps the last 20 versions per kid in `data/progress/<id>/`.
+
+- **Family code.** Making a profile needs the family code, so strangers who find the URL can't sign up. It prints when the server starts (`[geniuslab] family code: 123456`). Pin your own with `GL_FAMILY_CODE=123456`.
+- **Switching kids on one device.** Settings → Profile & backup → *Switch profile*. That clears this device, and the next kid signs in.
+- **Backup files.** Settings → *Download backup* / *Restore from file* works for guests too.
+- **Your data.** Everything lives in `./data` (set `GL_DATA` to move it). Back that folder up. It is git-ignored.
+
+### Run it for the kids (installable app)
+
+```bash
+npm start          # builds, then serves the app + API on http://localhost:4173 (PORT to change)
+```
+
+The offline app shell and "Install" only work in this built mode over **https**, which the tunnel provides. `npm run dev` also serves the API, but it skips the offline shell.
+
+To install on a phone, open `https://geniuslab.ctgs.link`:
+
+- **Android (Chrome):** Settings → *Install app*, or the menu → *Install app*.
+- **iPhone (Safari):** Share → *Add to Home Screen*.
+
+### Cloudflare Tunnel
+
+The dev and preview servers already allow `geniuslab.ctgs.link` and any `*.ctgs.link` host. Add others with `GL_HOSTS=a.example.com,b.example.com`. Point the tunnel at whichever port you run:
+
+```yaml
+# ~/.cloudflared/config.yml
+tunnel: <TUNNEL_ID>
+credentials-file: /home/<you>/.cloudflared/<TUNNEL_ID>.json
+ingress:
+  - hostname: geniuslab.ctgs.link
+    service: http://localhost:4173   # npm start   (use 5173 for npm run dev)
+  - service: http_status:404
+```
+
+```bash
+cloudflared tunnel run <TUNNEL_NAME>                    # one-off
+sudo cloudflared service install                        # always on
+sudo cp deploy/geniuslab.service /etc/systemd/system/  # keep the app always on too (edit paths first)
+```
 
 ## Project layout
 

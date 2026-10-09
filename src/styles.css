@@ -2259,6 +2259,124 @@ button:disabled.match-item {
   background: transparent;
 }
 
+/* ---------- profile, backup, install ---------- */
+
+.settings-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.group-title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.profile-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+}
+
+.profile-card p {
+  margin: 0;
+  flex: 1 1 260px;
+}
+
+.profile-who {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.profile-who > span:last-child {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.avatar {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  background: var(--brand);
+  color: var(--on-brand, #fff);
+}
+
+.sync-saved {
+  color: var(--good);
+}
+
+.sync-offline,
+.sync-signed-out {
+  color: var(--gold);
+}
+
+.sync-syncing {
+  color: var(--muted);
+}
+
+.row-tight {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.profile-form {
+  display: grid;
+  gap: 12px;
+}
+
+.profile-form label {
+  display: grid;
+  gap: 4px;
+}
+
+.profile-form label > span:first-child {
+  font-weight: 700;
+}
+
+.profile-form input {
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
+}
+
+.profile-form input:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.form-error {
+  margin: 0;
+  color: var(--bad);
+}
+
+.install-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
 .themes {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));

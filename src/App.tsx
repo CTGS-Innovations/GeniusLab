@@ -13,9 +13,9 @@ import {
   loadProgress,
   newProgress,
   recordAnswer,
-  saveProgress,
   type Achievement,
 } from './engine/progress';
+import { useCloud } from './engine/useCloud';
 import type { LabId, Question } from './types';
 
 type Screen =
@@ -35,10 +35,7 @@ export default function App() {
   const [progress, setProgress] = useState(loadProgress);
   const [screen, setScreen] = useState<Screen>({ name: 'home' });
   const [showSettings, setShowSettings] = useState(() => !progress.settings.onboarded);
-
-  useEffect(() => {
-    saveProgress(progress);
-  }, [progress]);
+  const cloud = useCloud(progress, setProgress);
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [screen.name]);
@@ -92,6 +89,9 @@ export default function App() {
           welcome={!progress.settings.onboarded}
           settings={progress.settings}
           onChange={(settings) => setProgress((p) => ({ ...p, settings }))}
+          progress={progress}
+          onImport={setProgress}
+          cloud={cloud}
           onClose={closeSettings}
         />
       )}

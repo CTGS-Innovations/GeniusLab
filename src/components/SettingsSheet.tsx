@@ -1,4 +1,6 @@
-import type { Settings, ThemeId } from '../engine/progress';
+import type { Progress, Settings, ThemeId } from '../engine/progress';
+import type { Cloud } from '../engine/useCloud';
+import { ProfileSection } from './ProfileSection';
 
 export const THEMES: { id: ThemeId; name: string; vibe: string; swatch: string[] }[] = [
   { id: 'lab', name: 'Lab', vibe: 'Deep navy, violet glow', swatch: ['#101222', '#8b5cf6', '#facc15'] },
@@ -14,22 +16,27 @@ interface Props {
   settings: Settings;
   onChange: (s: Settings) => void;
   onClose: () => void;
+  progress: Progress;
+  onImport: (p: Progress) => void;
+  cloud: Cloud;
 }
 
-export function SettingsSheet({ welcome, settings, onChange, onClose }: Props) {
+export function SettingsSheet({ welcome, settings, onChange, onClose, progress, onImport, cloud }: Props) {
   const set = <K extends keyof Settings>(k: K, v: Settings[K]) => onChange({ ...settings, [k]: v });
   return (
     <div className="sheet-backdrop" onClick={onClose}>
       <div className="sheet" role="dialog" aria-label="Settings" onClick={(e) => e.stopPropagation()}>
         <div className="sheet-head">
           <div>
-            <h2>{welcome ? 'Pick your vibe' : 'Make it yours'}</h2>
+            <h2>{welcome ? 'Welcome to Genius Lab' : 'Make it yours'}</h2>
             {welcome && <p className="muted small">Change it any time with 🎨 on Home.</p>}
           </div>
           <button className="btn btn-ghost" onClick={onClose} aria-label="Close">
             ✕
           </button>
         </div>
+
+        {welcome && <ProfileSection cloud={cloud} progress={progress} onImport={onImport} />}
 
         <span className="why-label">Theme</span>
         <div className="themes">
@@ -53,6 +60,8 @@ export function SettingsSheet({ welcome, settings, onChange, onClose }: Props) {
           <Toggle label="Haptics" hint="A little buzz on phones when you score." on={settings.haptics} onFlip={() => set('haptics', !settings.haptics)} />
           <Toggle label="Recap stories" hint="Quick highlight cards after each round." on={settings.recap} onFlip={() => set('recap', !settings.recap)} />
         </div>
+
+        {!welcome && <ProfileSection cloud={cloud} progress={progress} onImport={onImport} />}
 
         {welcome && (
           <button className="btn btn-primary btn-block" onClick={onClose}>
