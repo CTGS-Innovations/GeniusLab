@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { KIND_INFO, MODE_INFO, labById, skillById } from '../data';
+import { KIND_INFO, MODE_INFO, labById, questionsForSkill, skillById } from '../data';
 import { pointsFor, streakMultiplier, timeLimit } from '../engine/scoring';
 import { LIGHTNING_SECONDS, buildLightning, buildPractice } from '../engine/session';
 import { TRAP_BEATEN_AT, stat, termCount, type Progress } from '../engine/progress';
@@ -220,7 +220,7 @@ export function Play({ spec, progress, onAnswer, onProgress, onFinish, onQuit }:
           <span className="chip">{KIND_INFO[q.kind].icon} {KIND_INFO[q.kind].name}</span>
           <span className="chip">{'★'.repeat(q.difficulty)}{'☆'.repeat(3 - q.difficulty)}</span>
           {ALIGNMENT[q.skill] && <span className="chip">📚 {ALIGNMENT[q.skill].grade}</span>}
-          {q.trap && <span className="chip chip-trap">⚠️ Trap ahead</span>}
+          {q.trap && !questionsForSkill(q.skill).every((x) => x.trap) && <span className="chip chip-trap">⚠️ Trap ahead</span>}
           {streak > 0 && <span className="chip chip-accent">×{streakMultiplier(streak).toFixed(1)}</span>}
           {guideRetired && !done && (
             <button className="chip chip-btn" onClick={() => setGuideOpen((o) => !o)}>

@@ -16,6 +16,7 @@ export const SKILL_WHY: Record<string, Why> = {
   'm-errors': { headline: 'Debug before you scale.', points: ['One bad step breaks everything after it.', 'Pros find the broken step fast.', 'Catch it here, catch it on tests.'] },
   'm-rules': { headline: 'Know the playbook.', points: ['Rules are proven shortcuts.', 'Spot the pattern, skip the grind.', 'Factoring and exponents unlock Algebra II.'] },
   'm-functions': { headline: 'Read the trend, see what’s next.', points: ['Slope = speed. Curve = momentum.', 'Every growth chart is a function.', 'Read it at a glance, decide faster.'] },
+  'm-traps': { headline: 'Know the trap before it gets you.', points: ['Most students miss these.', 'Name the trap, apply the rule.', 'Test writers build questions on them.'] },
   // English
   'e-parts': { headline: 'Who’s doing what?', points: ['Every sentence has a core.', 'Find the subject, then the verb.', 'Same skill as a one-line pitch.'] },
   'e-grammar': { headline: 'Small bugs cost big trust.', points: ['One typo can sink a pitch.', 'Errors are bugs in your writing.', 'Clean writing reads as clear thinking.'] },
@@ -23,12 +24,14 @@ export const SKILL_WHY: Record<string, Why> = {
   'e-clarity': { headline: 'Clear beats clever.', points: ['If they guess, you lose them.', 'One read should be enough.', 'Cut every word that doesn’t work.'] },
   'e-openings': { headline: 'Win the first ten seconds.', points: ['The hook earns attention.', 'The thesis earns buy-in.', 'Vague claim, no deal.'] },
   'e-revise': { headline: 'Ship it, then iterate.', points: ['A first draft is an MVP.', 'Fix big picture first, polish last.', 'Pick the one change that matters most.'] },
+  'e-usage': { headline: 'One wrong word costs credibility.', points: ['These pairs fool most writers.', 'A quick test beats guessing.', 'Precise words read as expertise.'] },
   // Science
   's-variables': { headline: 'Change one thing, learn one thing.', points: ['Two changes at once teach you nothing.', 'Startups test prices this exact way.', 'Every lab report starts here.'] },
   's-hypothesis': { headline: 'Make a bet, then prove it.', points: ['A hypothesis is a testable bet.', 'Evidence beats vibes.', 'Correlation is not proof.'] },
   's-design': { headline: 'Build a fair test.', points: ['No control group, no conclusion.', 'More trials, less luck.', 'Spot weak claims in the wild.'] },
   's-cause': { headline: 'Find what moves the needle.', points: ['Wrong cause, wrong fix.', 'Trace the force or the reaction.', 'Same logic as debugging a product.'] },
   's-data': { headline: 'Read the numbers. Don’t get played.', points: ['Check the axis before the bars.', 'One outlier can fool you.', 'Decide on facts, not drama.'] },
+  's-myths': { headline: 'Unlearn the myth.', points: ['Your gut is often wrong here.', 'Evidence beats intuition.', 'Fix the model, fix every answer.'] },
   's-next': { headline: 'Always know your next move.', points: ['Ask, test, learn, repeat.', 'Results decide the next test.', 'Scientists and founders run the same loop.'] },
 };
 

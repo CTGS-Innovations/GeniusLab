@@ -126,6 +126,20 @@ export const ALIGNMENT: Record<string, Alignment> = {
     terms: ['Function notation', 'Slope-intercept form', 'Rate of change', 'Vertex form', 'Zeros / roots / x-intercepts', 'Transformations'],
   },
 
+  'm-traps': {
+    grade: 'Geometry → Algebra II · Gr 10–11',
+    foundation: 'Algebra I',
+    standards: [
+      { code: 'GEO.G-SRT.C.6', framework: 'MA Math 2017', where: 'Geometry', url: `${MATH}#page=122`,
+        text: 'Understand that by similarity, side ratios in right triangles are properties of the angles in the triangle, leading to definitions of trigonometric ratios for acute angles.' },
+      { code: 'GEO.S-CP.B.7', framework: 'MA Math 2017', where: 'Geometry', url: `${MATH}#page=124`,
+        text: 'Apply the Addition Rule, P(A or B) = P(A) + P(B) – P(A and B), and interpret the answer in terms of the model.' },
+      { code: 'AII.F-LE.A.4', framework: 'MA Math 2017', where: 'Algebra II', url: `${MATH}#page=130`,
+        text: 'For exponential models, express as a logarithm the solution to ab^(ct) = d…; evaluate the logarithm using technology.' },
+    ],
+    terms: ['Common errors', 'Misconceptions', 'Scale factor', 'SOH-CAH-TOA', 'Addition Rule', 'Laws of logarithms'],
+  },
+
   // ---------- English ----------
   'e-parts': {
     grade: 'Grades 9–10',
@@ -198,6 +212,19 @@ export const ALIGNMENT: Record<string, Alignment> = {
     terms: ['Revising vs. editing', 'ARMS / CUPS', 'Precise word choice', 'Strong verbs', 'Sentence variety', 'Conclusion: “so what?”'],
   },
 
+  'e-usage': {
+    grade: 'Grades 9–11',
+    standards: [
+      { code: 'L.11-12.1b', framework: 'MA ELA 2017', where: 'Grades 11–12', url: `${ELA}#page=123`,
+        text: 'Resolve issues of complex or contested usage, consulting references… as needed.' },
+      { code: 'L.9-10.5b', framework: 'MA ELA 2017', where: 'Grades 9–10', url: `${ELA}#page=116`,
+        text: 'Analyze nuances in the meaning of words with similar denotations.' },
+      { code: 'RI.9-10.6', framework: 'MA ELA 2017', where: 'Grades 9–10', url: `${ELA}#page=112`,
+        text: 'Determine an author’s point of view or purpose in a text and analyze how an author uses rhetoric to advance that point of view or purpose.' },
+    ],
+    terms: ['Commonly confused words', 'Homophones', 'Usage', 'Rhetorical appeals', 'Tone and mood', 'Connotation'],
+  },
+
   // ---------- Science ----------
   's-variables': {
     grade: 'High school · Gr 9–12',
@@ -260,6 +287,20 @@ export const ALIGNMENT: Record<string, Alignment> = {
     ],
     terms: ['Trend / pattern', 'Outlier', 'Line of best fit', 'Axes and scale', 'Misleading graphs', 'TAILS checklist'],
   },
+  's-myths': {
+    grade: 'Physics · Chemistry · Biology · Gr 9–11',
+    standards: [
+      { code: 'HS-PS2-1', framework: 'MA STE 2016', where: 'High school Introductory Physics', url: `${STE}#page=93`,
+        text: 'Analyze data to support the claim that Newton’s second law of motion is a mathematical model describing change in motion (the acceleration) of objects when acted on by a net force.' },
+      { code: 'HS-PS1-4', framework: 'MA STE 2016', where: 'High school Chemistry', url: `${STE}#page=88`,
+        text: 'Develop a model to illustrate the energy transferred during an exothermic or endothermic chemical reaction based on the bond energy difference between bonds broken (absorption of energy) and bonds formed (release of energy).' },
+      { code: 'HS-PS1-7', framework: 'MA STE 2016', where: 'High school Chemistry', url: `${STE}#page=89`,
+        text: 'Use mathematical representations and provide experimental evidence to support the claim that atoms, and therefore mass, are conserved during a chemical reaction.' },
+      { code: 'HS-LS1-5', framework: 'MA STE 2016', where: 'High school Biology', url: `${STE}#page=83`,
+        text: 'Use a model to illustrate how photosynthesis uses light energy to transform water and carbon dioxide into oxygen and chemical energy stored in the bonds of sugars and other carbohydrates.' },
+    ],
+    terms: ['Misconceptions', 'Inertia', 'Conservation of mass', 'Bond energy', 'Natural selection', 'Accuracy vs. precision'],
+  },
   's-next': {
     grade: 'High school · Gr 11–12',
     standards: [
@@ -292,8 +333,8 @@ export const MILESTONES: Record<'math' | 'english' | 'science', { note?: string;
     levels: [
       { level: 'Foundations · Grades 5–8', domains: ['Operations and Algebraic Thinking (OA)', 'Expressions and Equations (EE)', 'Functions (F)'], skills: ['m-order', 'm-inverse', 'm-rules'] },
       { level: 'Algebra I · Grade 9', domains: ['A-SSE Seeing Structure in Expressions', 'A-CED Creating Equations', 'A-REI Reasoning with Equations and Inequalities', 'F-IF Interpreting Functions', 'F-LE Linear, Quadratic, and Exponential Models', 'N-Q Quantities'], skills: ['m-word', 'm-multistep', 'm-errors', 'm-functions'] },
-      { level: 'Geometry · Grade 10', domains: ['G-CO Congruence', 'G-SRT Similarity, Right Triangles, and Trigonometry', 'G-GPE Expressing Geometric Properties with Equations', 'G-MG Modeling with Geometry'], skills: [] },
-      { level: 'Algebra II · Grade 11', domains: ['A-APR Arithmetic with Polynomials and Rational Expressions', 'F-BF Building Functions', 'S-IC Making Inferences and Justifying Conclusions', 'N-CN The Complex Number System'], skills: ['m-functions'] },
+      { level: 'Geometry · Grade 10', domains: ['G-CO Congruence', 'G-SRT Similarity, Right Triangles, and Trigonometry', 'G-GPE Expressing Geometric Properties with Equations', 'S-CP Conditional Probability and the Rules of Probability'], skills: ['m-traps'] },
+      { level: 'Algebra II · Grade 11', domains: ['A-APR Arithmetic with Polynomials and Rational Expressions', 'F-BF Building Functions', 'S-IC Making Inferences and Justifying Conclusions', 'N-CN The Complex Number System'], skills: ['m-functions', 'm-traps'] },
       { level: 'Precalculus · Grade 12', domains: ['F-BF Building Functions (inverse functions, logarithms)', 'F-TF Trigonometric Functions', 'N-VM Vector and Matrix Quantities'], skills: [] },
     ],
   },
@@ -302,8 +343,8 @@ export const MILESTONES: Record<'math' | 'english' | 'science', { note?: string;
     levels: [
       { level: 'Foundations · Grades 3–8', domains: ['Language: Conventions of Standard English (agreement, fragments and run-ons, modifiers, vague pronouns)'], skills: ['e-parts', 'e-grammar', 'e-clarity'] },
       { level: 'Grade 9', domains: ['Language: Conventions of Standard English', 'Writing: Text Types and Purposes (argument: claims and counterclaims)', 'Writing: Research to Build and Present Knowledge'], skills: ['e-structure', 'e-openings'] },
-      { level: 'Grade 10', domains: ['Language: Knowledge of Language (decrease redundancy)', 'Writing: Production and Distribution of Writing (planning, revising, editing)'], skills: ['e-clarity', 'e-revise'] },
-      { level: 'Grade 11', domains: ['Writing: Text Types and Purposes (knowledgeable claims, significance)', 'Language: Knowledge of Language (vary syntax)'], skills: ['e-openings', 'e-revise'] },
+      { level: 'Grade 10', domains: ['Language: Knowledge of Language (decrease redundancy)', 'Writing: Production and Distribution of Writing (planning, revising, editing)', 'Language: Vocabulary Acquisition and Use (nuances in word meanings)'], skills: ['e-clarity', 'e-revise', 'e-usage'] },
+      { level: 'Grade 11', domains: ['Writing: Text Types and Purposes (knowledgeable claims, significance)', 'Language: Knowledge of Language (vary syntax)', 'Language: Conventions (contested usage)', 'Reading Informational Text (rhetoric)'], skills: ['e-openings', 'e-revise', 'e-usage'] },
       { level: 'Grade 12', domains: ['Language: Knowledge of Language (concise and cohesive)', 'Writing: Research to Build and Present Knowledge'], skills: ['e-revise'] },
     ],
   },
@@ -311,7 +352,7 @@ export const MILESTONES: Record<'math' | 'english' | 'science', { note?: string;
     note: 'Course order varies by district. The framework names grades 9–10 introductory and 11–12 upper-level courses.',
     levels: [
       { level: 'Foundations · Grades 6–8', domains: ['SEP 3 Planning and Carrying Out Investigations (identify independent and dependent variables and controls)'], skills: ['s-variables'] },
-      { level: 'Introductory courses · Grades 9–10', domains: ['PS1 Matter and Its Interactions (Chemistry)', 'PS2 Motion and Stability: Forces and Interactions (Introductory Physics)', 'SEP 1 Asking Questions', 'SEP 3 Planning and Carrying Out Investigations'], skills: ['s-hypothesis', 's-design', 's-cause'] },
+      { level: 'Introductory courses · Grades 9–10', domains: ['PS1 Matter and Its Interactions (Chemistry)', 'PS2 Motion and Stability: Forces and Interactions (Introductory Physics)', 'SEP 1 Asking Questions', 'SEP 3 Planning and Carrying Out Investigations', 'LS1 & LS4 Biology (photosynthesis, natural selection)'], skills: ['s-hypothesis', 's-design', 's-cause', 's-myths'] },
       { level: 'Upper-level courses · Grades 11–12', domains: ['SEP 4 Analyzing and Interpreting Data', 'SEP 6 Constructing Explanations', 'SEP 7 Engaging in Argument from Evidence', 'Nature of Science'], skills: ['s-data', 's-next'] },
     ],
   },

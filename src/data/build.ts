@@ -6,6 +6,7 @@ interface DraftBase {
   prompt: string;
   context?: string;
   why: string;
+  trap?: string;
 }
 
 /**
