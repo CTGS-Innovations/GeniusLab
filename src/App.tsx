@@ -26,8 +26,12 @@ export default function App() {
   const [progress, setProgress] = useState(loadProgress);
   const [screen, setScreen] = useState<Screen>({ name: 'home' });
 
-  useEffect(() => saveProgress(progress), [progress]);
-  useEffect(() => window.scrollTo(0, 0), [screen.name]);
+  useEffect(() => {
+    saveProgress(progress);
+  }, [progress]);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [screen.name]);
 
   const play = (spec: SessionSpec) => setScreen({ name: 'play', spec, run: Date.now() });
 
