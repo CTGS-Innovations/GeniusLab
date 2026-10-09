@@ -30,6 +30,8 @@ export interface CoachContext {
   dismissed: Set<string>;
   /** True once the current question is answered. */
   done: boolean;
+  /** Clock is running (Speed mode or Lightning). Speed and clock tips only apply then. */
+  timed?: boolean;
 }
 
 export type CoachCard =
@@ -65,11 +67,11 @@ export function coachCards(c: CoachContext): CoachCard[] {
   }
 
   if (!c.tipsOff && !c.lightning) {
-    if (last && prev && last.timedOut && prev.timedOut) {
+    if (c.timed !== false && last && prev && last.timedOut && prev.timedOut) {
       cards.push({ id: `clock-${n}`, type: 'tip', icon: '⏱️', title: 'Beat the clock', text: 'Lock in your best guess with 5 seconds left.' });
     } else if (last && prev && !last.correct && !prev.correct) {
       cards.push({ id: `reset-${n}`, type: 'tip', icon: '🧭', title: 'Reset', text: RESET_TIP[last.q.mode] });
-    } else if (last && prev && last.correct && prev.correct && last.timeLeft < 0.35 && prev.timeLeft < 0.35) {
+    } else if (c.timed !== false && last && prev && last.correct && prev.correct && last.timeLeft < 0.35 && prev.timeLeft < 0.35) {
       cards.push({ id: `speed-${n}`, type: 'tip', icon: '⚡', title: 'Accuracy locked. Now speed.', text: 'Faster answers earn up to +100 each.' });
     }
 

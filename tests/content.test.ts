@@ -58,6 +58,16 @@ describe('content bank', () => {
     }
   });
 
+  it('every non-chain question has a Why? set: one reason and two distinct decoys', () => {
+    for (const q of QUESTIONS.filter((x) => x.kind !== 'chain')) {
+      expect(q.reason, q.id).toBeTruthy();
+      expect(q.decoys?.length, q.id).toBe(2);
+      const all = [q.reason!, ...q.decoys!];
+      expect(new Set(all).size, q.id).toBe(3);
+      for (const r of all) expect(r.length, `${q.id}: ${r}`).toBeLessThanOrEqual(90);
+    }
+  });
+
   it('every lab trains all three core thinking modes', () => {
     for (const lab of LABS) {
       const modes = new Set(QUESTIONS.filter((q) => SKILLS.find((s) => s.id === q.skill)!.lab === lab.id).map((q) => q.mode));

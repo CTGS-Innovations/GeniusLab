@@ -3,18 +3,22 @@ import { LABS, MODE_INFO } from '../data';
 import { labMastery, rankFor, suggestedSkill, type Progress } from '../engine/progress';
 import type { LabId } from '../types';
 import { Bar, Ring } from './ui';
+import { useIsPhone } from './fx';
 
 interface Props {
   progress: Progress;
   onOpenLab: (lab: LabId) => void;
   onLightning: (lab: LabId | 'all') => void;
   onGrowth: () => void;
+  onSettings: () => void;
+  onSwipe: (lab: LabId | 'all') => void;
 }
 
-export function Home({ progress, onOpenLab, onLightning, onGrowth }: Props) {
+export function Home({ progress, onOpenLab, onLightning, onGrowth, onSettings, onSwipe }: Props) {
   const rank = rankFor(progress.xp);
   const [boltLab, setBoltLab] = useState<LabId | 'all'>('all');
   const fresh = progress.sessions.length === 0;
+  const isPhone = useIsPhone();
 
   return (
     <div className="screen home">
@@ -25,6 +29,9 @@ export function Home({ progress, onOpenLab, onLightning, onGrowth }: Props) {
           </h1>
           <p className="tagline">Spot It. Break It Down. Level Up.</p>
         </div>
+        <button className="btn btn-ghost gear" onClick={onSettings} aria-label="Settings">
+          🎨 <span className="gear-label">Theme &amp; settings</span>
+        </button>
         <button className="card rank-card" onClick={onGrowth}>
           <div className="rank-icon">{rank.icon}</div>
           <div className="rank-body">
@@ -62,7 +69,7 @@ export function Home({ progress, onOpenLab, onLightning, onGrowth }: Props) {
             const next = suggestedSkill(progress, lab.id);
             return (
               <button key={lab.id} className="card lab-card" style={{ ['--accent' as string]: lab.color }} onClick={() => onOpenLab(lab.id)}>
-                <Ring value={m} color={lab.color} size={96}>
+                <Ring value={m} color={lab.color} size={isPhone ? 64 : 96}>
                   <span className="lab-icon big">{lab.icon}</span>
                 </Ring>
                 <strong className="lab-name">{lab.name}</strong>
@@ -76,7 +83,19 @@ export function Home({ progress, onOpenLab, onLightning, onGrowth }: Props) {
           })}
         </section>
 
-        <aside className="card bolt">
+        <aside className="home-side">
+        <button className="card swipe-card" onClick={() => onSwipe(boltLab)}>
+          <span className="swipe-phone" aria-hidden>
+            <i />
+            <i />
+            <i />
+          </span>
+          <span>
+            <strong>📱 Swipe Mode</strong>
+            <span className="small muted">One card at a time. Answer, explain why, swipe up. No clock.</span>
+          </span>
+        </button>
+        <div className="card bolt">
           <div className="bolt-head">
             <div>
               <h3>⚡ Lightning Round</h3>
@@ -97,6 +116,7 @@ export function Home({ progress, onOpenLab, onLightning, onGrowth }: Props) {
           <button className="btn btn-gold btn-block" onClick={() => onLightning(boltLab)}>
             Start the clock
           </button>
+        </div>
         </aside>
       </div>
     </div>

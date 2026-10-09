@@ -4,6 +4,7 @@ import { Home } from './components/Home';
 import { LabView } from './components/LabView';
 import { Play, type SessionSpec, type SessionSummary } from './components/Play';
 import { Results } from './components/Results';
+import { SettingsSheet } from './components/SettingsSheet';
 import { skillById } from './data';
 import {
   finishSession,
@@ -25,6 +26,7 @@ type Screen =
 export default function App() {
   const [progress, setProgress] = useState(loadProgress);
   const [screen, setScreen] = useState<Screen>({ name: 'home' });
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     saveProgress(progress);
@@ -32,6 +34,11 @@ export default function App() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [screen.name]);
+  useEffect(() => {
+    const root = document.documentElement;
+    root.dataset.theme = progress.settings.theme;
+    root.classList.toggle('reduce-motion', progress.settings.motion === 'reduced');
+  }, [progress.settings.theme, progress.settings.motion]);
 
   const play = (spec: SessionSpec) => setScreen({ name: 'play', spec, run: Date.now() });
 
@@ -63,6 +70,21 @@ export default function App() {
     [progress],
   );
 
+  const view = renderScreen();
+  return (
+    <>
+      {view}
+      {showSettings && (
+        <SettingsSheet
+          settings={progress.settings}
+          onChange={(settings) => setProgress((p) => ({ ...p, settings }))}
+          onClose={() => setShowSettings(false)}
+        />
+      )}
+    </>
+  );
+
+  function renderScreen() {
   switch (screen.name) {
     case 'home':
       return (
@@ -71,6 +93,8 @@ export default function App() {
           onOpenLab={(lab) => setScreen({ name: 'lab', lab })}
           onLightning={(lab) => play({ type: 'lightning', lab })}
           onGrowth={() => setScreen({ name: 'growth' })}
+          onSettings={() => setShowSettings(true)}
+          onSwipe={(lab) => play({ type: 'swipe', lab })}
         />
       );
     case 'lab':
@@ -122,4 +146,5 @@ export default function App() {
         />
       );
   }
+}
 }

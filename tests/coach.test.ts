@@ -53,6 +53,11 @@ describe('coach', () => {
     expect(types(ctx({ prevMode: 'spot', log, streak: 2 }))).toEqual(['speed']);
   });
 
+  it('skips speed nudges when the clock is off', () => {
+    const log = [ans({ timeLeft: 0.2 }), ans({ timeLeft: 0.1 })];
+    expect(types(ctx({ prevMode: 'spot', log, streak: 2, timed: false }))).toEqual([]);
+  });
+
   it('never shows a dismissed card again', () => {
     const c = ctx({ showBrief: true });
     const dismissed = new Set(coachCards(c).map((x) => x.id));

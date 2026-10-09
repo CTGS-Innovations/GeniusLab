@@ -11,7 +11,7 @@ export interface SkillStat {
 
 export interface SessionRecord {
   at: string;
-  type: 'practice' | 'lightning';
+  type: 'practice' | 'lightning' | 'swipe';
   lab: LabId | 'all';
   skill: string | null;
   correct: number;
@@ -47,7 +47,22 @@ export interface Progress {
     /** Student turned coaching tips off. */
     off: boolean;
   };
+  settings: Settings;
+  /** Right answers on the "Why?" follow-up. */
+  insights: number;
 }
+
+export type ThemeId = 'lab' | 'street' | 'y2k' | 'studio' | 'arcade';
+
+export interface Settings {
+  theme: ThemeId;
+  /** Timed practice with speed bonuses. Off by default; Lightning is always timed. */
+  speed: boolean;
+  motion: 'full' | 'reduced';
+  haptics: boolean;
+}
+
+export const DEFAULT_SETTINGS: Settings = { theme: 'lab', speed: false, motion: 'full', haptics: true };
 
 export const UNLOCK_AT = 50;
 export const MAX_SESSIONS = 200;
@@ -71,6 +86,8 @@ export function newProgress(): Progress {
     kindsPlayed: {},
     traps: {},
     coach: { briefsDismissed: [], off: false },
+    settings: { ...DEFAULT_SETTINGS },
+    insights: 0,
   };
 }
 
@@ -194,6 +211,17 @@ function nextTrap(t: Progress['traps'][string] | undefined, correct: boolean) {
   return { seen: (t?.seen ?? 0) + 1, run, beaten: (t?.beaten ?? false) || run >= TRAP_BEATEN_AT };
 }
 
+/** The "Why?" follow-up: a right reason nudges mastery up a little and counts as an Insight. */
+export function recordWhy(p: Progress, q: Question, correct: boolean): Progress {
+  if (!correct) return p;
+  const s = stat(p, q.skill);
+  return {
+    ...p,
+    insights: p.insights + 1,
+    skills: { ...p.skills, [q.skill]: { ...s, mastery: Math.round((s.mastery + (100 - s.mastery) * 0.05) * 10) / 10 } },
+  };
+}
+
 /* ---------- finishing a session ---------- */
 
 export function dayKey(d: Date): string {
@@ -305,7 +333,10 @@ export function loadProgress(): Progress {
     const raw = localStorage.getItem(KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as Progress;
-      if (parsed.version === 1) return { ...newProgress(), ...parsed };
+      if (parsed.version === 1) {
+        const base = newProgress();
+        return { ...base, ...parsed, settings: { ...base.settings, ...parsed.settings } };
+      }
     }
   } catch {
     // storage unavailable or corrupt — start fresh

@@ -28,7 +28,7 @@ export function Results({ summary, progress, earned, onPractice, onAgain, onDone
   return (
     <div className="screen results">
       <header className="results-head">
-        <p className="muted">{spec.type === 'lightning' ? '⚡ Lightning Round' : `${skill!.icon} ${skill!.name}`}</p>
+        <p className="muted">{spec.type === 'lightning' ? '⚡ Lightning Round' : spec.type === 'swipe' ? '📱 Swipe Mode' : `${skill!.icon} ${skill!.name}`}</p>
         <h1>{grade}</h1>
         <div className="big-score">{points.toLocaleString()}</div>
         <p className="muted">points · +{points.toLocaleString()} XP</p>
@@ -49,6 +49,12 @@ export function Results({ summary, progress, earned, onPractice, onAgain, onDone
           <strong>🔥 {bestStreak}</strong>
           <span className="muted small">best streak</span>
         </div>
+        {log.some((a) => a.why) && (
+          <div className="stat">
+            <strong>💡 {log.filter((a) => a.why?.correct).length}/{log.filter((a) => a.why).length}</strong>
+            <span className="muted small">reasons right</span>
+          </div>
+        )}
       </div>
 
       <div className={`card ${rankedUp ? 'rank-up' : ''}`}>
