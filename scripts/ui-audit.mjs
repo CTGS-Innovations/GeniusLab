@@ -110,6 +110,36 @@ function auditPage({ phone }) {
       }
     }
 
+    // 2b. Text crowding a rounded corner: no rendered glyph box may poke outside the curve.
+    const framed = cs.borderTopWidth !== '0px' || (rgba(cs.backgroundColor)?.[3] ?? 0) > 0;
+    const cap = (v) => Math.min(parseFloat(v) || 0, r.height / 2, r.width / 2);
+    const radii = [cs.borderTopLeftRadius, cs.borderTopRightRadius, cs.borderBottomLeftRadius, cs.borderBottomRightRadius].map(cap);
+    const rad = Math.max(...radii);
+    if (framed && rad > 8) {
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      const range = document.createRange();
+      let worst = 0;
+      for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+        if (!n.textContent.trim() || decorative(n.parentElement)) continue;
+        range.selectNodeContents(n);
+        for (const t of range.getClientRects()) {
+          if (t.bottom <= r.top || t.top >= r.bottom) continue; // scrolled out of a scroller's view
+          // Glyph boxes include line-height leading; shrink to the ink-ish core.
+          const lead = Math.max(0, (t.height - parseFloat(getComputedStyle(n.parentElement).fontSize)) / 2);
+          const pts = [[t.left, t.top + lead], [t.right, t.top + lead], [t.left, t.bottom - lead], [t.right, t.bottom - lead]];
+          const [a, b, c, d] = radii;
+          const centers = [[r.left + a, r.top + a], [r.right - b, r.top + b], [r.left + c, r.bottom - c], [r.right - d, r.bottom - d]];
+          pts.forEach(([x, y], i) => {
+            if (radii[i] <= 8) return;
+            const [cx, cy] = centers[i];
+            const out = (i % 2 ? x > cx : x < cx) && (i < 2 ? y < cy : y > cy);
+            if (out) worst = Math.max(worst, Math.hypot(x - cx, y - cy) - radii[i]);
+          });
+        }
+      }
+      if (worst > 1) add('corner-crowd', el, `text pokes ${Math.round(worst)}px past a ${Math.round(rad)}px corner`);
+    }
+
     // 3. Siblings that overlap each other.
     // Inline runs wrap and interleave by design; data-overlay marks deliberate layers (tap zones).
     const kids = [...el.children].filter((c) => {

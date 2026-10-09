@@ -83,8 +83,10 @@ describe('CSS uses design tokens only', () => {
     expect(bad.map(fmt)).toEqual([]);
   });
 
-  it('radii come from --radius tokens', () => {
-    const bad = rules.filter((d) => d.prop === 'border-radius' && !/^(var\(--radius[\w-]*\)\s*)+(0\s*)*$|^50%$|^0$|^inherit$/.test(d.value.replace(/var\(--radius[\w-]*\) var/g, 'var')) && !/^var\(--radius[\w-]*\)( var\(--radius[\w-]*\)| 0)*$/.test(d.value));
+  it('radii come from a role token: card, tile, control (plus xs, pill, 50%)', () => {
+    const role = 'var\\(--radius-(card|tile|control|xs|pill)\\)';
+    const ok = new RegExp(`^${role}( (${role}|0))*$|^50%$|^0$|^inherit$`);
+    const bad = rules.filter((d) => d.prop === 'border-radius' && !ok.test(d.value));
     expect(bad.map(fmt)).toEqual([]);
   });
 
@@ -104,13 +106,19 @@ describe('anti-slop: banned patterns', () => {
     expect(rules.filter((d) => /background-clip$/.test(d.prop) && d.value === 'text').map(fmt)).toEqual([]);
   });
 
-  it('no colored accent bars on one side of a box', () => {
-    const bad = rules.filter((d) => /^border-(left|right)$/.test(d.prop) && /([3-9]|\d{2,})px/.test(d.value));
+  it('no colored accent bars on any one edge of a box', () => {
+    const bad = rules.filter((d) => /^border-(left|right|top|bottom)$/.test(d.prop) && /([3-9]|\d{2,})px/.test(d.value));
     expect(bad.map(fmt)).toEqual([]);
   });
 
   it('no card gradients: surfaces are flat', () => {
     const bad = rules.filter((d) => d.selector.split(',').some((s) => /^\s*\.card\s*$/.test(s)) && /gradient/.test(d.value));
+    expect(bad.map(fmt)).toEqual([]);
+  });
+
+  it('gradients only where they carry meaning (page glow, progress fill, recap backdrop)', () => {
+    const allowed = /^(html|body|\.chip\.combo|\.recap)$/;
+    const bad = rules.filter((d) => /gradient\(/.test(d.value) && !d.selector.split(',').every((x) => allowed.test(x.trim())));
     expect(bad.map(fmt)).toEqual([]);
   });
 

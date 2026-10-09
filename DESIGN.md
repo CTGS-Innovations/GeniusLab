@@ -17,7 +17,7 @@ Every value comes from a token in `:root` at the top of `src/styles.css`. Themes
 | --- | --- | --- |
 | Spacing | `--sp-1` 4 · `--sp-2` 8 · `--sp-3` 12 · `--sp-4` 16 · `--sp-5` 20 · `--sp-6` 24 · `--sp-8` 32 · `--sp-10` 40 · `--sp-12` 48 · `--sp-16` 64 | 4px grid for padding, margin, and gap. 1–2px hairlines are fine. |
 | Type | `--fs-xs` .75 · `--fs-sm` .875 · `--fs-base` 1 · `--fs-md` 1.125 · `--fs-lg` 1.375 · `--fs-xl` 1.75 · `--fs-2xl` 2.25 · `--fs-3xl` 3 · `--fs-display` (rem, 1rem = 17px) | Nothing renders below 12px. Math sub/sup use `max(var(--fs-xs), .72em)`. |
-| Shape | `--radius-xs`, `--radius-sm`, `--radius`, `--radius-pill`, `50%` | Themes set `--radius*`. Components pick a role, not a number. |
+| Shape | `--radius-card` (containers) · `--radius-tile` (options, tiles, notes inside a card) · `--radius-control` (buttons, chips, inputs) · `--radius-xs` · `--radius-pill` · `50%` | Pick by role, never by number. Themes set each role. Y2K makes only controls pills; containers stay softly rounded so text never sits in a curve. |
 | Layers | `--z-raised` · `--z-float` · `--z-sticky` · `--z-dock` · `--z-sheet` · `--z-overlay` | No bare z-index numbers. |
 | Elevation | `--shadow-1`, `--shadow-2`, `--scrim` | Shadows only on things that float (menus, sheets). Cards are flat. |
 | Color roles | `--bg` `--bg-2` `--card` `--card-2` `--line` `--text` `--muted` `--brand` `--gold` `--good` `--bad` `--accent` | Tints are `color-mix(in srgb, var(--role) N%, transparent)`, never rgba literals. |
@@ -39,6 +39,7 @@ Every value comes from a token in `:root` at the top of `src/styles.css`. Themes
 5. **Truncation is a last resort.** If text uses `text-overflow: ellipsis`, the element carries a `title` with the full text.
 6. **Breakpoints:** phone ≤ 767px, tablet ≤ 1199px, desktop above. Every screen is checked at all three.
 7. **Decorations are `aria-hidden`.** Bursts, fly-ups, and pin pops never take part in layout.
+8. **Text clears rounded corners.** The audit measures every rendered line of text against its frame's curve (`corner-crowd`).
 
 ## 3. Components
 
@@ -81,10 +82,13 @@ These are the tells of generic generated UI. Each one is banned, and most are ch
 | --- | --- | --- |
 | Gradient text (`background-clip: text`) | Solid brand color on one word | L |
 | Purple-to-blue or rainbow gradients on surfaces | Flat token surfaces. A gradient only as a progress fill or a deliberate theme feature (Y2K button). | L (cards) |
-| Colored accent bar down one side of a card or note | Tinted background or a divider | L |
+| Colored accent bar on any one edge of a card, panel, or note | Tinted background or a divider | L |
 | Emoji as section markers or bullet icons | `<Icon>` or nothing | L |
 | Card inside card, borders inside borders | One surface per group, dividers inside | A |
-| Same radius and shadow on everything | Radius by role, shadows only on floating layers | L |
+| Same radius and shadow on everything; glow on every card | Radius by role; shadows only on floating layers | L |
+| Text crammed into a pill or rounded corner | Role radii; containers never use the control radius | A (`corner-crowd`) |
+| Gradient fills on cards and panels | Flat tints. Gradients only for the page glow, the combo meter, and the recap backdrop. | L |
+| Mixed framing: some groups boxed, some bare, random colored borders | One frame per group. At most one highlighted card per region (Lightning). | review |
 | `!important` to win specificity fights | Correct selectors (`:is()` state rules). `!important` only to turn motion off. | L |
 | Arbitrary one-off sizes (13px, 0.92rem, 14px gaps) | Type and spacing scales | L |
 | Ellipsis-truncated labels with no way to read them | Wrap, or add a `title` | A |

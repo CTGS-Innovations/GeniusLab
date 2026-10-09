@@ -11,8 +11,10 @@
   --good: #2bc48a;
   --bad: #ff5d73;
   --accent: var(--brand);
-  --radius: 16px;
-  --radius-sm: 12px;
+  /* radius by role: containers, tiles inside them, controls */
+  --radius-card: 16px;
+  --radius-tile: 12px;
+  --radius-control: 12px;
   --glow: #262c5c;
   --bolt-bg: #2a2540;
   --btn-primary: var(--accent);
@@ -103,8 +105,9 @@
   --muted: #cfcfcf;
   --brand: #ff3b1f;
   --gold: #f5e400;
-  --radius: 6px;
-  --radius-sm: 4px;
+  --radius-card: 6px;
+  --radius-tile: 4px;
+  --radius-control: 4px;
   --glow: #2a1410;
   --bolt-bg: #1f1d08;
   --display-transform: uppercase;
@@ -121,8 +124,9 @@
   --muted: #e2d4f7;
   --brand: #ff4fd8;
   --gold: #7df9ff;
-  --radius: 26px;
-  --radius-sm: 999px;
+  --radius-card: 24px;
+  --radius-tile: 16px;
+  --radius-control: 999px;
   --glow: #5b1f7a;
   --bolt-bg: #2b2266;
   --btn-primary: linear-gradient(100deg, #ff4fd8, #a77bff 50%, #7df9ff);
@@ -139,8 +143,9 @@
   --muted: #b4d4e2;
   --brand: #00e5a0;
   --gold: #ffd000;
-  --radius: 10px;
-  --radius-sm: 8px;
+  --radius-card: 10px;
+  --radius-tile: 8px;
+  --radius-control: 8px;
   --glow: #0b3b35;
   --bolt-bg: #1b1a06;
   --display-font: 'Courier New', ui-monospace, monospace;
@@ -205,10 +210,6 @@ h1,
   border: 2px solid currentColor;
   font-weight: 800;
   text-transform: uppercase;
-}
-
-:root[data-theme='y2k'] .card {
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--gold) 15%, transparent), 0 10px 30px color-mix(in srgb, var(--brand) 12%, transparent);
 }
 
 * {
@@ -334,7 +335,7 @@ p {
 .card {
   background: var(--card);
   border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border-radius: var(--radius-card);
   padding: var(--sp-4);
   text-align: left;
 }
@@ -360,7 +361,7 @@ button.card:hover:not(:disabled) {
   border: 1px solid var(--line);
   background: var(--card-2);
   padding: var(--sp-3) var(--sp-5);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-control);
   font-weight: 600;
   cursor: pointer;
   transition: transform 0.08s ease, filter 0.12s ease;
@@ -504,7 +505,7 @@ button.card:hover:not(:disabled) {
   height: 60px;
   display: grid;
   place-items: center;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-tile);
   background: var(--chip-bg);
   flex: none;
 }
@@ -531,17 +532,27 @@ button.card:hover:not(:disabled) {
 
 .how-modes {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--sp-3);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
 }
 
 .how-mode {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-1);
-  background: var(--card-2);
-  border-radius: var(--radius-sm);
-  padding: var(--sp-3);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: var(--sp-3);
+  align-items: center;
+  padding: var(--sp-4) var(--sp-5);
+}
+
+.how-mode .how-icon {
+  grid-row: span 2;
+}
+
+.how-mode + .how-mode {
+  border-left: 1px solid var(--line);
 }
 
 .how-icon {
@@ -549,7 +560,7 @@ button.card:hover:not(:disabled) {
   place-items: center;
   width: 40px;
   height: 40px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-tile);
   background: color-mix(in srgb, var(--brand) 16%, transparent);
   color: var(--brand);
   font-size: var(--fs-lg);
@@ -596,7 +607,7 @@ button.card:hover:not(:disabled) {
 
 .bolt {
   border-color: var(--gold);
-  background: linear-gradient(180deg, var(--bolt-bg) 0%, var(--bg-2) 100%);
+  background: var(--bolt-bg);
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
@@ -622,7 +633,7 @@ button.card:hover:not(:disabled) {
 .seg {
   display: flex;
   background: var(--card-2);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-control);
   padding: var(--sp-1);
   gap: var(--sp-1);
 }
@@ -647,10 +658,9 @@ button.card:hover:not(:disabled) {
 
 .home-top {
   display: grid;
-  grid-template-columns: auto minmax(0, 620px) auto;
-  justify-content: space-between;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 560px) auto;
   align-items: center;
-  gap: var(--sp-10);
+  gap: var(--sp-4) var(--sp-6);
 }
 
 .home .brand {
@@ -837,7 +847,7 @@ button.card:hover:not(:disabled) {
   align-items: center;
   gap: var(--sp-2);
   padding: var(--sp-2) var(--sp-3);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-control);
   border: 1px solid var(--line);
   background: var(--card-2);
   cursor: pointer;
@@ -1004,7 +1014,7 @@ button.card:hover:not(:disabled) {
 .context {
   background: var(--context-bg);
   border: 1px dashed var(--line);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-tile);
   padding: var(--sp-3) var(--sp-4);
   font-size: var(--fs-base);
   line-height: 1.5;
@@ -1028,7 +1038,7 @@ button.card:hover:not(:disabled) {
   gap: var(--sp-3);
   text-align: left;
   padding: var(--sp-3) var(--sp-4);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-tile);
   border: 2px solid var(--line);
   background: var(--card-2);
   cursor: pointer;
@@ -1065,7 +1075,7 @@ button.card:hover:not(:disabled) {
 .token {
   min-width: var(--tap);
   padding: var(--sp-3) var(--sp-4);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-tile);
   border: 2px solid var(--line);
   background: var(--card-2);
   cursor: pointer;
@@ -1123,7 +1133,7 @@ button:disabled.match-item {
   position: relative;
   min-height: 52px;
   padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-6);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-tile);
   border: 2px solid var(--line);
   background: var(--card-2);
   cursor: pointer;
@@ -1157,7 +1167,7 @@ button:disabled.match-item {
   gap: var(--sp-3);
   text-align: left;
   padding: var(--sp-3) var(--sp-3);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-tile);
   border: 2px solid var(--line);
   background: var(--card-2);
   cursor: pointer;
@@ -1199,7 +1209,7 @@ button:disabled.match-item {
 .reveal {
   margin: 0;
   padding: var(--sp-3) var(--sp-4) var(--sp-3) var(--sp-8);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-tile);
   background: color-mix(in srgb, var(--good) 10%, transparent);
   border: 1px solid color-mix(in srgb, var(--good) 35%, transparent);
   font-size: var(--fs-sm);
@@ -1207,7 +1217,7 @@ button:disabled.match-item {
 }
 
 .feedback {
-  border-radius: var(--radius);
+  border-radius: var(--radius-card);
   padding: var(--sp-4) var(--sp-4);
   border: 1px solid;
   animation: rise 0.2s ease;
@@ -1289,11 +1299,10 @@ button:disabled.match-item {
 
 .coach,
 .scorecard {
-  border-radius: var(--radius);
+  border-radius: var(--radius-card);
   padding: var(--sp-4);
   background: var(--bg-2);
   border: 1px solid var(--line);
-  border-top: 3px solid var(--accent);
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
@@ -1343,7 +1352,7 @@ button:disabled.match-item {
   flex-direction: column;
   gap: var(--sp-1);
   padding: var(--sp-2) var(--sp-2);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-tile);
   border: 1px solid transparent;
 }
 
@@ -1478,7 +1487,7 @@ button:disabled.match-item {
 
 .chain-step {
   border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-tile);
   padding: var(--sp-3);
   display: flex;
   flex-direction: column;
@@ -1569,7 +1578,7 @@ button:disabled.match-item {
 .stat {
   background: var(--card);
   border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-tile);
   padding: var(--sp-3);
   display: flex;
   flex-direction: column;
@@ -1635,7 +1644,7 @@ button:disabled.match-item {
   flex-direction: column;
   gap: var(--sp-1);
   padding: var(--sp-3);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-tile);
   background: var(--card-2);
   opacity: 0.5;
 }
@@ -1916,7 +1925,7 @@ button:disabled.match-item {
   font-size: var(--fs-sm);
   color: var(--text);
   padding: var(--sp-2) var(--sp-3);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-tile);
   background: color-mix(in srgb, var(--gold) 10%, transparent);
 }
 
@@ -1949,7 +1958,7 @@ button:disabled.match-item {
   flex-direction: column;
   gap: 2px;
   padding: var(--sp-3) var(--sp-3);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-tile);
   background: var(--card-2);
   border: 1px solid var(--line);
   font-size: var(--fs-sm);
@@ -1999,7 +2008,7 @@ button:disabled.match-item {
 
 .coach-card {
   position: relative;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-tile);
   padding: var(--sp-4) var(--sp-4);
   background: var(--card);
   border: 1px solid var(--line);
@@ -2227,7 +2236,7 @@ button:disabled.match-item {
   text-align: left;
   padding: var(--sp-3) var(--sp-4);
   min-height: 48px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-tile);
   border: 2px solid var(--line);
   background: var(--card-2);
   cursor: pointer;
@@ -2244,7 +2253,7 @@ button:disabled.match-item {
 .why-result {
   margin-top: var(--sp-2);
   padding: var(--sp-3) var(--sp-4);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-tile);
   animation: pop 0.35s ease;
 }
 
@@ -2388,7 +2397,7 @@ button:disabled.match-item {
   background: var(--bg-2);
   color: var(--text);
   border: 1px solid var(--line);
-  border-radius: var(--radius) var(--radius) 0 0;
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
   padding: var(--sp-5) var(--sp-5) calc(var(--sp-5) + env(safe-area-inset-bottom, 0px));
   display: flex;
   flex-direction: column;
@@ -2440,7 +2449,7 @@ button:disabled.match-item {
   gap: var(--sp-3);
   padding: var(--sp-3) var(--sp-4);
   border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-tile);
   background: var(--card);
 }
 
@@ -2510,7 +2519,7 @@ button:disabled.match-item {
 .profile-form input {
   min-height: 44px;
   padding: var(--sp-2) var(--sp-3);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-control);
   border: 1px solid var(--line);
   background: var(--card);
   color: var(--text);
@@ -2547,7 +2556,7 @@ button:disabled.match-item {
   gap: var(--sp-1);
   padding: var(--sp-3);
   text-align: left;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-tile);
   border: 2px solid var(--line);
   background: var(--card);
   cursor: pointer;
@@ -2584,7 +2593,7 @@ button:disabled.match-item {
   gap: var(--sp-4);
   padding: var(--sp-3) var(--sp-4);
   min-height: 56px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-tile);
   border: 1px solid var(--line);
   background: var(--card);
   text-align: left;
@@ -2661,7 +2670,7 @@ button:disabled.match-item {
 
 .dock button {
   min-height: 46px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-control);
   border: 1px solid var(--line);
   background: var(--card);
   font-weight: 700;
@@ -2714,7 +2723,7 @@ button:disabled.match-item {
   flex: none;
   width: 44px;
   height: 72px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-tile);
   border: 2px solid var(--brand);
   position: relative;
   overflow: hidden;
@@ -2935,13 +2944,18 @@ button:disabled.match-item {
 
   .home .how-modes {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--sp-2);
   }
 
   .home .how-mode {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    row-gap: var(--sp-1);
     padding: var(--sp-3) var(--sp-2);
-    align-items: center;
     text-align: center;
+  }
+
+  .home .how-mode .how-icon {
+    grid-row: auto;
   }
 
   .home .how-mode strong {
@@ -3014,7 +3028,7 @@ button:disabled.match-item {
   display: flex;
   flex-direction: column;
   padding: var(--sp-2);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-tile);
   background: var(--bg-2);
   border: 1px solid var(--line);
   box-shadow: var(--shadow-2);
@@ -3028,7 +3042,7 @@ button:disabled.match-item {
   padding: var(--sp-3) var(--sp-3);
   min-height: 44px;
   border: 0;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-tile);
   background: transparent;
   text-align: left;
   cursor: pointer;
@@ -3077,9 +3091,8 @@ button:disabled.match-item {
   font-size: var(--fs-md);
 }
 
-.sotd {
-  border-color: var(--gold);
-  background: linear-gradient(135deg, color-mix(in srgb, var(--gold) 12%, transparent), var(--bg-2) 60%);
+.sotd .why-label {
+  color: var(--gold);
 }
 
 /* ---------- boards ---------- */
@@ -3130,7 +3143,7 @@ button:disabled.match-item {
 .emoji-row button {
   width: 40px;
   height: 40px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-control);
   border: 1px solid var(--line);
   background: var(--card-2);
   cursor: pointer;
@@ -3151,7 +3164,7 @@ button:disabled.match-item {
   min-width: 0;
   min-height: 44px;
   padding: 0 var(--sp-3);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-control);
   border: 1px solid var(--line);
   background: var(--bg);
   color: var(--text);
@@ -3182,10 +3195,9 @@ button:disabled.match-item {
   flex-direction: column;
   gap: var(--sp-2);
   padding: var(--sp-4);
-  border-radius: var(--radius);
+  border-radius: var(--radius-card);
   background: var(--card);
   border: 1px solid var(--line);
-  border-top: 4px solid var(--accent);
 }
 
 .pin-skill {
@@ -3195,7 +3207,7 @@ button:disabled.match-item {
 
 .pin-context {
   padding: var(--sp-2) var(--sp-3);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-tile);
   background: var(--bg);
 }
 
@@ -3281,7 +3293,7 @@ button:disabled.match-item {
   gap: var(--sp-4);
   text-align: center;
   border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border-radius: var(--radius-card);
   background: color-mix(in srgb, var(--bg-2) 80%, var(--tone) 20%);
   cursor: pointer;
   padding: var(--sp-8) var(--sp-6);
