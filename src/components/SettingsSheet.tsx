@@ -9,18 +9,23 @@ export const THEMES: { id: ThemeId; name: string; vibe: string; swatch: string[]
 ];
 
 interface Props {
+  /** First launch: frame the sheet as picking a vibe. */
+  welcome?: boolean;
   settings: Settings;
   onChange: (s: Settings) => void;
   onClose: () => void;
 }
 
-export function SettingsSheet({ settings, onChange, onClose }: Props) {
+export function SettingsSheet({ welcome, settings, onChange, onClose }: Props) {
   const set = <K extends keyof Settings>(k: K, v: Settings[K]) => onChange({ ...settings, [k]: v });
   return (
     <div className="sheet-backdrop" onClick={onClose}>
       <div className="sheet" role="dialog" aria-label="Settings" onClick={(e) => e.stopPropagation()}>
         <div className="sheet-head">
-          <h2>Make it yours</h2>
+          <div>
+            <h2>{welcome ? 'Pick your vibe' : 'Make it yours'}</h2>
+            {welcome && <p className="muted small">Change it any time with 🎨 on Home.</p>}
+          </div>
           <button className="btn btn-ghost" onClick={onClose} aria-label="Close">
             ✕
           </button>
@@ -46,7 +51,14 @@ export function SettingsSheet({ settings, onChange, onClose }: Props) {
           <Toggle label="Speed mode" hint="Timed practice with speed bonuses. Lightning is always timed." on={settings.speed} onFlip={() => set('speed', !settings.speed)} />
           <Toggle label="Motion" hint="Animations and celebrations." on={settings.motion === 'full'} onFlip={() => set('motion', settings.motion === 'full' ? 'reduced' : 'full')} />
           <Toggle label="Haptics" hint="A little buzz on phones when you score." on={settings.haptics} onFlip={() => set('haptics', !settings.haptics)} />
+          <Toggle label="Recap stories" hint="Quick highlight cards after each round." on={settings.recap} onFlip={() => set('recap', !settings.recap)} />
         </div>
+
+        {welcome && (
+          <button className="btn btn-primary btn-block" onClick={onClose}>
+            Let’s go
+          </button>
+        )}
       </div>
     </div>
   );

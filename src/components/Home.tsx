@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { LABS, MODE_INFO } from '../data';
-import { labMastery, rankFor, suggestedSkill, type Progress } from '../engine/progress';
+import { labMastery, rankFor, skillOfTheDay, suggestedSkill, type Progress } from '../engine/progress';
 import type { LabId } from '../types';
 import { Bar, Ring } from './ui';
 import { useIsPhone } from './fx';
@@ -12,13 +12,18 @@ interface Props {
   onGrowth: () => void;
   onSettings: () => void;
   onSwipe: (lab: LabId | 'all') => void;
+  onPrep: (lab: LabId | 'all') => void;
+  onPractice: (skill: string) => void;
+  onBoards: () => void;
 }
 
-export function Home({ progress, onOpenLab, onLightning, onGrowth, onSettings, onSwipe }: Props) {
+export function Home({ progress, onOpenLab, onLightning, onGrowth, onSettings, onSwipe, onPrep, onPractice, onBoards }: Props) {
   const rank = rankFor(progress.xp);
   const [boltLab, setBoltLab] = useState<LabId | 'all'>('all');
   const fresh = progress.sessions.length === 0;
   const isPhone = useIsPhone();
+  const daily = skillOfTheDay(progress);
+  const saved = progress.boards.reduce((n, b) => n + b.items.length, 0);
 
   return (
     <div className="screen home">
@@ -61,6 +66,26 @@ export function Home({ progress, onOpenLab, onLightning, onGrowth, onSettings, o
           ))}
         </div>
       )}
+
+      <section className="for-you" aria-label="For you">
+        <button className="card fy-card sotd" onClick={() => onPractice(daily.id)}>
+          <span className="why-label">☀️ Skill of the Day</span>
+          <strong>
+            {daily.icon} {daily.name}
+          </strong>
+          <span className="small muted">{daily.goal}</span>
+        </button>
+        <button className="card fy-card" onClick={() => onPrep(boltLab)}>
+          <span className="why-label">🪞 Get Ready With Me</span>
+          <strong>Test prep in 5 minutes</strong>
+          <span className="small muted">Your misses, open traps, and weakest skills{boltLab === 'all' ? '' : ` in ${LABS.find((l) => l.id === boltLab)!.name}`}.</span>
+        </button>
+        <button className="card fy-card" onClick={onBoards}>
+          <span className="why-label">📌 My Boards</span>
+          <strong>{saved ? `${saved} saved ${saved === 1 ? 'card' : 'cards'}` : 'Save cards to review'}</strong>
+          <span className="small muted">{progress.boards.map((b) => b.emoji).join(' ')} Practice straight from a board.</span>
+        </button>
+      </section>
 
       <div className="home-grid">
         <section className="labs">

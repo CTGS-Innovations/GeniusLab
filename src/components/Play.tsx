@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { KIND_INFO, MODE_INFO, labById, questionsForSkill, skillById } from '../data';
 import { pointsFor, streakMultiplier, timeLimit } from '../engine/scoring';
-import { LIGHTNING_SECONDS, buildLightning, buildPractice, shuffle } from '../engine/session';
-import { TRAP_BEATEN_AT, recordWhy, stat, termCount, type Progress } from '../engine/progress';
+import { LIGHTNING_SECONDS, buildBoard, buildLightning, buildPractice, buildPrep, shuffle } from '../engine/session';
+import { TRAP_BEATEN_AT, boardsWith, recordWhy, stat, termCount, toggleSaved, type Progress } from '../engine/progress';
 import { trapById } from '../data/traps';
 import { BRIEF_RETIRES_AFTER, coachCards } from '../engine/coach';
 import type { LabId, Question } from '../types';
@@ -17,7 +17,9 @@ import { Burst, buzz, useIsPhone } from './fx';
 export type SessionSpec =
   | { type: 'practice'; skill: string }
   | { type: 'lightning'; lab: LabId | 'all' }
-  | { type: 'swipe'; lab: LabId | 'all' };
+  | { type: 'swipe'; lab: LabId | 'all' }
+  | { type: 'board'; board: string }
+  | { type: 'prep'; lab: LabId | 'all' };
 
 export interface AnswerLog {
   q: Question;
@@ -71,7 +73,13 @@ export function Play({ spec, progress, onAnswer, onProgress, onFinish, onQuit }:
   const isPhone = useIsPhone();
 
   const [queue, setQueue] = useState<Question[]>(() =>
-    spec.type === 'practice' ? buildPractice(progress, spec.skill) : buildLightning(progress, spec.lab),
+    spec.type === 'practice'
+      ? buildPractice(progress, spec.skill)
+      : spec.type === 'board'
+        ? buildBoard(progress, spec.board)
+        : spec.type === 'prep'
+          ? buildPrep(progress, spec.lab)
+          : buildLightning(progress, spec.lab),
   );
   const [idx, setIdx] = useState(0);
   const [done, setDone] = useState(false);
@@ -88,6 +96,9 @@ export function Play({ spec, progress, onAnswer, onProgress, onFinish, onQuit }:
   const [guideOpen, setGuideOpen] = useState(false);
   const [whyPick, setWhyPick] = useState<number | null>(null);
   const [sheet, setSheet] = useState<'score' | 'coach' | null>(null);
+  const [saveOpen, setSaveOpen] = useState(false);
+  const [pinPop, setPinPop] = useState(0);
+  const lastTap = useRef(0);
   const touchY = useRef<number | null>(null);
 
   const q = queue[idx];
@@ -166,6 +177,8 @@ export function Play({ spec, progress, onAnswer, onProgress, onFinish, onQuit }:
     setDone(false);
     setWhyPick(null);
     setGuideOpen(false);
+    setSaveOpen(false);
+    setPinPop(0);
     setQStart(performance.now());
     if (swipe) window.scrollTo({ top: 0 });
   }, [endless, swipe, idx, queue.length, finish, log, points, bestStreak, progress, spec]);
@@ -202,6 +215,13 @@ export function Play({ spec, progress, onAnswer, onProgress, onFinish, onQuit }:
     if (spec.type === 'lightning') {
       return { title: '⚡ Lightning Round', sub: `${spec.lab === 'all' ? 'All labs' : labById(spec.lab).name} · speed and streaks multiply your score`, color: 'var(--gold)' };
     }
+    if (spec.type === 'board') {
+      const b = progress.boards.find((x) => x.id === spec.board);
+      return { title: `${b?.emoji ?? '📌'} ${b?.name ?? 'Board'}`, sub: 'Your saved cards', color: 'var(--brand)' };
+    }
+    if (spec.type === 'prep') {
+      return { title: '🪞 Get Ready With Me', sub: 'Your misses, open traps, and weakest skills', color: 'var(--brand)' };
+    }
     if (spec.type === 'swipe') {
       return { title: '📱 Swipe Mode', sub: `${spec.lab === 'all' ? 'All labs' : labById(spec.lab).name} · answer, explain, swipe up`, color: 'var(--brand)' };
     }
@@ -237,6 +257,13 @@ export function Play({ spec, progress, onAnswer, onProgress, onFinish, onQuit }:
       onProgress((p) => ({ ...p, coach: { ...p.coach, briefsDismissed: [...new Set([...p.coach.briefsDismissed, q.skill])] } }));
     }
     setDismissed((d) => new Set(d).add(id));
+  };
+
+  const saved = boardsWith(progress, q.id);
+  const quickSave = () => {
+    if (!saved.includes('review')) onProgress((p) => toggleSaved(p, 'review', q.id));
+    setPinPop((n) => n + 1);
+    if (haptics) buzz(10);
   };
 
   const scorecard = <Scorecard progress={progress} lab={lab} current={q.skill} log={log} lightning={endless} />;
@@ -331,7 +358,22 @@ export function Play({ spec, progress, onAnswer, onProgress, onFinish, onQuit }:
             )}
           </div>
 
-          <div key={idx} className={`card challenge enter ${guideRetired && !guideOpen ? 'no-guide' : ''} ${fresh?.correct ? 'won' : ''}`}>
+          <div
+            key={idx}
+            className={`card challenge enter ${guideRetired && !guideOpen ? 'no-guide' : ''} ${fresh?.correct ? 'won' : ''}`}
+            onPointerUp={(e) => {
+              // Double-tap empty space on the card to quick-save it to Review later.
+              if ((e.target as HTMLElement).closest('button')) return;
+              const t = performance.now();
+              if (t - lastTap.current < 320) quickSave();
+              lastTap.current = t;
+            }}
+          >
+            {pinPop > 0 && (
+              <span key={`pin-${pinPop}`} className="pin-pop" aria-hidden>
+                📌
+              </span>
+            )}
             <h2 className="prompt">
               <T>{q.prompt}</T>
             </h2>
@@ -340,7 +382,7 @@ export function Play({ spec, progress, onAnswer, onProgress, onFinish, onQuit }:
                 <T>{q.context}</T>
               </div>
             )}
-            <Challenge key={idx} q={q} done={done} onSubmit={(c, f) => submit(c, false, f)} />
+            <Challenge key={`q-${idx}`} q={q} done={done} onSubmit={(c, f) => submit(c, false, f)} />
           </div>
 
           {done && fresh && (
@@ -399,6 +441,21 @@ export function Play({ spec, progress, onAnswer, onProgress, onFinish, onQuit }:
                       <p className="trap-note">
                         <strong>⚠️ Common trap · {trapById(q.trap)!.name}.</strong> <T>{trapById(q.trap)!.tell}</T>
                       </p>
+                    )}
+                  </div>
+                  <div className="save-wrap">
+                    <button className={`btn save-btn ${saved.length ? 'on' : ''} ${!fresh.correct && !saved.length ? 'nudge' : ''}`} onClick={() => setSaveOpen((o) => !o)} aria-expanded={saveOpen}>
+                      📌 {saved.length ? 'Saved' : 'Save'}
+                    </button>
+                    {saveOpen && (
+                      <div className="save-menu" role="menu">
+                        {progress.boards.map((b) => (
+                          <button key={b.id} role="menuitemcheckbox" aria-checked={saved.includes(b.id)} onClick={() => onProgress((p) => toggleSaved(p, b.id, q.id))}>
+                            <span>{b.emoji} {b.name}</span>
+                            <span>{saved.includes(b.id) ? '✓' : '+'}</span>
+                          </button>
+                        ))}
+                      </div>
                     )}
                   </div>
                   <button className="btn btn-primary next-btn" onClick={advance} autoFocus>

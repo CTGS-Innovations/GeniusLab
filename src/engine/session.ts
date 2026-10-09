@@ -65,3 +65,40 @@ export function buildLightning(p: Progress, lab: LabId | 'all', rng: Rng = Math.
     rng,
   );
 }
+
+const byId = (id: string) => QUESTIONS.find((q) => q.id === id);
+
+/** Questions saved to a board, shuffled. */
+export function buildBoard(p: Progress, boardId: string, rng: Rng = Math.random): Question[] {
+  const board = p.boards.find((b) => b.id === boardId);
+  return shuffle((board?.items ?? []).map(byId).filter((q): q is Question => !!q), rng);
+}
+
+export const PREP_LENGTH = 8;
+
+/**
+ * "Get Ready With Me" test prep: a short warm-up built from what this student
+ * actually needs — recent misses, traps not beaten yet, the Test Friday board,
+ * then the weakest unlocked skills.
+ */
+export function buildPrep(p: Progress, lab: LabId | 'all', rng: Rng = Math.random): Question[] {
+  const inLab = (q: Question) => lab === 'all' || SKILLS.find((s) => s.id === q.skill)!.lab === lab;
+  const open = new Set(SKILLS.filter((s) => isUnlocked(p, s)).map((s) => s.id));
+  const ok = (q: Question | undefined): q is Question => !!q && inLab(q) && open.has(q.skill) && q.kind !== 'chain';
+  const picked = new Map<string, Question>();
+  const take = (qs: (Question | undefined)[], max: number) => {
+    for (const q of qs) {
+      if (picked.size >= PREP_LENGTH || max <= 0) break;
+      if (ok(q) && !picked.has(q.id)) {
+        picked.set(q.id, q);
+        max--;
+      }
+    }
+  };
+  take(p.missed.map(byId), 3);
+  take(shuffle(QUESTIONS.filter((q) => q.trap && p.traps[q.trap] && !p.traps[q.trap].beaten), rng), 2);
+  take(shuffle((p.boards.find((b) => b.id === 'test')?.items ?? []).map(byId), rng), 2);
+  const weakest = SKILLS.filter((s) => open.has(s.id) && (lab === 'all' || s.lab === lab)).sort((a, b) => mastery(p, a.id) - mastery(p, b.id));
+  for (const s of weakest) take(shuffle(QUESTIONS.filter((q) => q.skill === s.id), rng), 2);
+  return [...picked.values()];
+}

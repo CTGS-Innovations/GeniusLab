@@ -11,7 +11,7 @@ export interface SkillStat {
 
 export interface SessionRecord {
   at: string;
-  type: 'practice' | 'lightning' | 'swipe';
+  type: 'practice' | 'lightning' | 'swipe' | 'board' | 'prep';
   lab: LabId | 'all';
   skill: string | null;
   correct: number;
@@ -50,7 +50,41 @@ export interface Progress {
   settings: Settings;
   /** Right answers on the "Why?" follow-up. */
   insights: number;
+  /** Saved cards, Pinterest-style. */
+  boards: Board[];
 }
+
+export interface Board {
+  id: string;
+  name: string;
+  emoji: string;
+  /** Question ids, newest first. */
+  items: string[];
+}
+
+export const DEFAULT_BOARDS: Board[] = [
+  { id: 'traps', name: 'Traps I keep falling for', emoji: '🪤', items: [] },
+  { id: 'review', name: 'Review later', emoji: '🔖', items: [] },
+  { id: 'test', name: 'Test Friday', emoji: '📝', items: [] },
+];
+
+export function toggleSaved(p: Progress, boardId: string, qid: string): Progress {
+  return {
+    ...p,
+    boards: p.boards.map((b) =>
+      b.id !== boardId ? b : { ...b, items: b.items.includes(qid) ? b.items.filter((x) => x !== qid) : [qid, ...b.items] },
+    ),
+  };
+}
+
+export function addBoard(p: Progress, name: string, emoji = '📌'): Progress {
+  const clean = name.trim().slice(0, 40);
+  if (!clean) return p;
+  const id = `b-${Date.now().toString(36)}`;
+  return { ...p, boards: [...p.boards, { id, name: clean, emoji, items: [] }] };
+}
+
+export const boardsWith = (p: Progress, qid: string) => p.boards.filter((b) => b.items.includes(qid)).map((b) => b.id);
 
 export type ThemeId = 'lab' | 'street' | 'y2k' | 'studio' | 'arcade';
 
@@ -60,9 +94,13 @@ export interface Settings {
   speed: boolean;
   motion: 'full' | 'reduced';
   haptics: boolean;
+  /** Show Recap Stories after each round. */
+  recap: boolean;
+  /** First-run vibe picker has been shown. */
+  onboarded: boolean;
 }
 
-export const DEFAULT_SETTINGS: Settings = { theme: 'lab', speed: false, motion: 'full', haptics: true };
+export const DEFAULT_SETTINGS: Settings = { theme: 'lab', speed: false, motion: 'full', haptics: true, recap: true, onboarded: false };
 
 export const UNLOCK_AT = 50;
 export const MAX_SESSIONS = 200;
@@ -88,6 +126,7 @@ export function newProgress(): Progress {
     coach: { briefsDismissed: [], off: false },
     settings: { ...DEFAULT_SETTINGS },
     insights: 0,
+    boards: DEFAULT_BOARDS.map((b) => ({ ...b, items: [] })),
   };
 }
 
@@ -295,6 +334,16 @@ export function adviceAfter(before: Progress, after: Progress, skill: Skill, acc
 export function suggestedSkill(p: Progress, lab: LabId): Skill {
   const open = skillsForLab(lab).filter((s) => isUnlocked(p, s));
   return [...open].sort((a, b) => mastery(p, a.id) - mastery(p, b.id))[0];
+}
+
+/** A daily pick among unlocked skills that still have room to grow. Same skill all day. */
+export function skillOfTheDay(p: Progress, now = new Date()): Skill {
+  const open = SKILLS.filter((s) => isUnlocked(p, s) && mastery(p, s.id) < 85);
+  const pool = open.length ? open : SKILLS.filter((s) => isUnlocked(p, s));
+  const key = dayKey(now);
+  let h = 0;
+  for (const c of key) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return pool[h % pool.length];
 }
 
 /* ---------- achievements ---------- */
