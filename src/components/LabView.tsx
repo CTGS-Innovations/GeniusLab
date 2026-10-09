@@ -33,11 +33,14 @@ export function LabView({ lab: labId, progress, onPractice, onBack }: Props) {
         </div>
       </header>
 
-      <button className="btn btn-primary btn-block" onClick={() => onPractice(next.id)}>
-        ▶ Continue: {next.icon} {next.name}
-      </button>
-
-      <h3 className="section-title">Skill tree</h3>
+      <div className="lab-layout">
+      <section className="lab-tree">
+      <div className="lab-tree-head">
+        <h3 className="section-title">Skill tree</h3>
+        <button className="btn btn-primary" onClick={() => onPractice(next.id)}>
+          ▶ Continue: {next.icon} {next.name}
+        </button>
+      </div>
       <p className="muted small">
         Reach {UNLOCK_AT}% mastery (Bronze) in a skill to unlock the skills built on it.
       </p>
@@ -75,7 +78,9 @@ export function LabView({ lab: labId, progress, onPractice, onBack }: Props) {
           </div>
         ))}
       </div>
+      </section>
 
+      <aside className="lab-milestones">
       <h3 className="section-title">Milestones by grade</h3>
       <p className="muted small">
         Mapped to the Massachusetts Curriculum Framework. {MILESTONES[labId].note}
@@ -119,6 +124,8 @@ export function LabView({ lab: labId, progress, onPractice, onBack }: Props) {
           </span>
         ))}
       </p>
+      </aside>
+      </div>
     </div>
   );
 }

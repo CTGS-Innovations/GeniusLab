@@ -2,10 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { KIND_INFO, MODE_INFO, labById, skillById } from '../data';
 import { pointsFor, streakMultiplier, timeLimit } from '../engine/scoring';
 import { LIGHTNING_SECONDS, buildLightning, buildPractice } from '../engine/session';
-import type { Progress } from '../engine/progress';
+import { stat, termCount, type Progress } from '../engine/progress';
+import { BRIEF_RETIRES_AFTER, coachCards } from '../engine/coach';
 import type { LabId, Question } from '../types';
 import { ALIGNMENT } from '../data/curriculum';
-import { MODE_WHY, SKILL_WHY } from '../data/why';
+import { HOWTO_LIMIT } from '../data/why';
+import { Coach } from './Coach';
 import { Scorecard } from './Scorecard';
 import { Challenge } from './Challenge';
 
@@ -17,6 +19,9 @@ export interface AnswerLog {
   timedOut: boolean;
   points: number;
   seconds: number;
+  timeLeft: number;
+  /** Teacher term unlocked by this answer. */
+  term?: string;
 }
 
 export interface SessionSummary {
@@ -31,6 +36,8 @@ interface Props {
   spec: SessionSpec;
   progress: Progress;
   onAnswer: (q: Question, correct: boolean, timeLeft: number) => void;
+  /** Update coach preferences (dismissed briefs, tips on/off). */
+  onProgress: (update: (p: Progress) => Progress) => void;
   onFinish: (summary: SessionSummary) => void;
   onQuit: () => void;
 }
@@ -39,7 +46,7 @@ interface Props {
 const LIGHTNING_SPEED_WINDOW = 10;
 const LIGHTNING_FLASH_MS = 650;
 
-export function Play({ spec, progress, onAnswer, onFinish, onQuit }: Props) {
+export function Play({ spec, progress, onAnswer, onProgress, onFinish, onQuit }: Props) {
   const before = useRef(progress).current;
   const lightning = spec.type === 'lightning';
   const [queue, setQueue] = useState<Question[]>(() =>
@@ -55,6 +62,9 @@ export function Play({ spec, progress, onAnswer, onFinish, onQuit }: Props) {
   const [now, setNow] = useState(() => performance.now());
   const roundStart = useRef(performance.now());
   const finished = useRef(false);
+  const [dismissed, setDismissed] = useState<Set<string>>(() => new Set());
+  const [briefOpen, setBriefOpen] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
 
   const q = queue[idx];
   const limit = lightning ? LIGHTNING_SPEED_WINDOW : timeLimit(q);
@@ -85,14 +95,16 @@ export function Play({ spec, progress, onAnswer, onFinish, onQuit }: Props) {
         ? pointsFor(true, timeLeft, streak, q.difficulty)
         : Math.round(pointsFor(true, timeLeft, 0, q.difficulty) * fraction * 0.5);
       const nextStreak = correct ? streak + 1 : 0;
+      const had = progress.terms[q.skill] ?? 0;
+      const term = correct && had < termCount(q.skill) ? ALIGNMENT[q.skill].terms[had] : undefined;
       setDone(true);
       setStreak(nextStreak);
       setBestStreak((b) => Math.max(b, nextStreak));
       setPoints((p) => p + gained);
-      setLog((l) => [...l, { q, correct, timedOut, points: gained, seconds }]);
+      setLog((l) => [...l, { q, correct, timedOut, points: gained, seconds, timeLeft, term }]);
       onAnswer(q, correct, timeLeft);
     },
-    [done, qStart, limit, streak, q, onAnswer],
+    [done, qStart, limit, streak, q, onAnswer, progress.terms],
   );
 
   const advance = useCallback(() => {
@@ -105,6 +117,7 @@ export function Play({ spec, progress, onAnswer, onFinish, onQuit }: Props) {
     }
     setIdx((i) => i + 1);
     setDone(false);
+    setGuideOpen(false);
     setQStart(performance.now());
   }, [lightning, idx, queue.length, finish, log, points, bestStreak, progress, spec]);
 
@@ -125,11 +138,10 @@ export function Play({ spec, progress, onAnswer, onFinish, onQuit }: Props) {
 
   const header = useMemo(() => {
     if (spec.type === 'lightning') {
-      return { title: 'Lightning Round', sub: spec.lab === 'all' ? 'All labs' : labById(spec.lab).name, color: '#ffc145' };
+      return { title: '⚡ Lightning Round', sub: spec.lab === 'all' ? 'All labs · speed and streaks multiply your score' : `${labById(spec.lab).name} · speed and streaks multiply your score`, color: '#ffc145' };
     }
     const skill = skillById(spec.skill);
-    const lab = labById(skill.lab);
-    return { title: skill.name, sub: lab.name, color: lab.color };
+    return { title: `${skill.icon} ${skill.name}`, sub: skill.goal, color: labById(skill.lab).color };
   }, [spec]);
 
   if (!q) {
@@ -143,21 +155,46 @@ export function Play({ spec, progress, onAnswer, onFinish, onQuit }: Props) {
 
   const clockFrac = lightning ? roundLeft / LIGHTNING_SECONDS : Math.max(0, 1 - elapsed / limit);
   const clockText = lightning ? Math.ceil(roundLeft) : Math.max(0, Math.ceil(limit - elapsed));
+  const prevMode = idx > 0 ? queue[idx - 1].mode : null;
+  const guideRetired = (before.kindsPlayed[q.kind] ?? 0) >= HOWTO_LIMIT;
+  const tipsOff = progress.coach.off;
+  const showBrief =
+    briefOpen || (!progress.coach.briefsDismissed.includes(q.skill) && stat(progress, q.skill).attempts < BRIEF_RETIRES_AFTER);
+  const cards = coachCards({ q, prevMode, log, streak, lightning, showBrief: !lightning && showBrief, tipsOff, dismissed, done });
+
+  const dismiss = (id: string) => {
+    if (id.startsWith('brief-')) {
+      setBriefOpen(false);
+      onProgress((p) => ({ ...p, coach: { ...p.coach, briefsDismissed: [...new Set([...p.coach.briefsDismissed, q.skill])] } }));
+    }
+    setDismissed((d) => new Set(d).add(id));
+  };
 
   return (
     <div className="screen play" style={{ ['--accent' as string]: header.color }}>
+      <Scorecard progress={progress} lab={skillById(q.skill).lab} current={q.skill} log={log} lightning={lightning} />
+
       <div className="play-main">
-        <div className="play-top">
+        <header className="play-top">
           <button className="btn btn-ghost" onClick={onQuit} aria-label="Quit">✕</button>
           <div className="play-title">
             <strong>{header.title}</strong>
             <span className="muted">{header.sub}</span>
           </div>
+          {!lightning && (
+            <button
+              className={`btn btn-ghost why-toggle ${showBrief ? 'on' : ''}`}
+              onClick={() => (showBrief ? dismiss(`brief-${q.skill}`) : setBriefOpen(true))}
+              title="Why this skill matters"
+            >
+              ⓘ Why it matters
+            </button>
+          )}
           <div className="play-score">
             <span className="score">{points.toLocaleString()}</span>
             <span className={`streak ${streak >= 3 ? 'hot' : ''}`}>🔥 {streak}</span>
           </div>
-        </div>
+        </header>
 
         <div className="clock">
           <div className={`clock-fill ${clockFrac < 0.25 ? 'low' : ''}`} style={{ width: `${clockFrac * 100}%` }} />
@@ -166,21 +203,27 @@ export function Play({ spec, progress, onAnswer, onFinish, onQuit }: Props) {
 
         <div className="play-meta">
           {!lightning && (
-            <span>
-              {idx + 1} / {queue.length}
-            </span>
+            <ol className="dots" aria-label={`Challenge ${idx + 1} of ${queue.length}`}>
+              {queue.map((_, i) => {
+                const a = log[i];
+                const cls = a ? (a.correct ? 'good' : a.points > 0 ? 'part' : 'bad') : i === idx ? 'now' : '';
+                return <li key={i} className={cls} />;
+              })}
+            </ol>
           )}
           <span className="chip">{MODE_INFO[q.mode].icon} {MODE_INFO[q.mode].name}</span>
           <span className="chip">{KIND_INFO[q.kind].icon} {KIND_INFO[q.kind].name}</span>
           <span className="chip">{'★'.repeat(q.difficulty)}{'☆'.repeat(3 - q.difficulty)}</span>
           {ALIGNMENT[q.skill] && <span className="chip">📚 {ALIGNMENT[q.skill].grade}</span>}
           {streak > 0 && <span className="chip chip-accent">×{streakMultiplier(streak).toFixed(1)}</span>}
+          {guideRetired && !done && (
+            <button className="chip chip-btn" onClick={() => setGuideOpen((o) => !o)}>
+              {guideOpen ? 'Hide steps' : '? How to play'}
+            </button>
+          )}
         </div>
 
-        <div className="card challenge">
-          <p className="goal">
-            <span>🎯 Goal</span> {skillById(q.skill).goal}
-          </p>
+        <div className={`card challenge ${guideRetired && !guideOpen ? 'no-guide' : ''}`}>
           <h2 className="prompt">{q.prompt}</h2>
           {q.context && <div className="context">{q.context}</div>}
           <Challenge key={idx} q={q} done={done} onSubmit={(c, f) => submit(c, false, f)} />
@@ -195,76 +238,27 @@ export function Play({ spec, progress, onAnswer, onFinish, onQuit }: Props) {
               {last.points > 0 && <span className="gain">+{last.points}</span>}
             </div>
             {!lightning && (
-              <>
-                <p>
-                  <span className="why-label">{last.correct ? 'Why it works' : 'Break it down'}</span>
-                  {q.why}
-                </p>
-                <button className="btn btn-primary btn-block" onClick={advance} autoFocus>
-                  {idx + 1 >= queue.length ? 'See results' : 'Next challenge →'}
+              <div className="feedback-body">
+                <p>{q.why}</p>
+                <button className="btn btn-primary" onClick={advance} autoFocus>
+                  {idx + 1 >= queue.length ? 'See results' : 'Next →'}
                 </button>
-              </>
+              </div>
             )}
           </div>
         )}
       </div>
 
-      <WhyPanel skill={q.skill} mode={q.mode} />
-      <Scorecard progress={progress} lab={skillById(q.skill).lab} current={q.skill} log={log} streak={streak} />
+      <Coach
+        cards={cards}
+        skill={q.skill}
+        lightning={lightning}
+        tipsOff={tipsOff}
+        progress={progress}
+        roundTerms={log.flatMap((a) => (a.term ? [a.term] : []))}
+        onDismiss={dismiss}
+        onToggleTips={() => onProgress((p) => ({ ...p, coach: { ...p.coach, off: !p.coach.off } }))}
+      />
     </div>
-  );
-}
-
-/** Always-on bottom-line-up-front card: same rows, same order, every challenge. */
-function WhyPanel({ skill, mode }: { skill: string; mode: Question['mode'] }) {
-  const why = SKILL_WHY[skill];
-  const align = ALIGNMENT[skill];
-  return (
-    <aside className="why-panel" aria-label="Why this matters">
-      <div className="why-row">
-        <span className="why-label">Bottom line</span>
-        <h3>{why.headline}</h3>
-      </div>
-      <div className="why-row">
-        <span className="why-label">Why it matters</span>
-        <p>{why.body}</p>
-      </div>
-      {align && align.terms.length > 0 && (
-        <div className="why-row">
-          <span className="why-label">Also called</span>
-          <div className="terms">
-            {align.terms.map((t) => (
-              <span key={t} className="term">{t}</span>
-            ))}
-          </div>
-        </div>
-      )}
-      {align && (
-        <div className="why-row">
-          <span className="why-label">Grade &amp; standard</span>
-          <p className="grade">
-            {align.grade}
-            {align.foundation && <span className="muted"> · builds on {align.foundation}</span>}
-          </p>
-          <ul className="standards">
-            {align.standards.map((st, i) => (
-              <li key={i}>
-                <a href={st.url} target="_blank" rel="noreferrer">
-                  <strong>{st.code}</strong>
-                </a>{' '}
-                <span className="muted">{st.text}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      <div className="why-row why-mode">
-        <span className="why-label">Your move</span>
-        <strong>
-          {MODE_INFO[mode].icon} {MODE_INFO[mode].name}
-        </strong>
-        <p>{MODE_WHY[mode]}</p>
-      </div>
-    </aside>
   );
 }

@@ -85,7 +85,17 @@ export default function App() {
     case 'play': {
       const spec = screen.spec;
       const exit = () => setScreen(spec.type === 'practice' ? { name: 'lab', lab: skillById(spec.skill).lab } : { name: 'home' });
-      return <Play key={screen.run} spec={spec} progress={progress} onAnswer={onAnswer} onFinish={onFinish} onQuit={exit} />;
+      return (
+        <Play
+          key={screen.run}
+          spec={spec}
+          progress={progress}
+          onAnswer={onAnswer}
+          onProgress={setProgress}
+          onFinish={onFinish}
+          onQuit={exit}
+        />
+      );
     }
     case 'results': {
       const spec = screen.summary.spec;

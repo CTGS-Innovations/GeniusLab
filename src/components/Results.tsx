@@ -33,6 +33,8 @@ export function Results({ summary, progress, earned, onPractice, onAgain, onDone
         <p className="muted">points · +{points.toLocaleString()} XP</p>
       </header>
 
+      <div className={`results-grid ${misses.length ? '' : 'single'}`}>
+      <div className="results-main">
       <div className="stats">
         <div className="stat">
           <strong>{correct}/{log.length}</strong>
@@ -78,7 +80,7 @@ export function Results({ summary, progress, earned, onPractice, onAgain, onDone
             <>
               <h3>🧱 Strengthen the foundation</h3>
               <p>
-                {skill.name} builds on <strong>{advice.skill.name}</strong>. A few reps there will make this skill click.
+                Built on <strong>{advice.skill.name}</strong>. A few reps there unlock this.
               </p>
               <button className="btn btn-primary btn-block" onClick={() => onPractice(advice.skill.id)}>
                 Practice {advice.skill.icon} {advice.skill.name}
@@ -88,7 +90,7 @@ export function Results({ summary, progress, earned, onPractice, onAgain, onDone
           {advice.kind === 'retry' && (
             <>
               <h3>🔁 Run it back</h3>
-              <p>Read the “Break it down” notes below, then try again — repetition builds recognition.</p>
+              <p>Review your misses. Then run it back.</p>
             </>
           )}
           {advice.kind === 'unlocked' && (
@@ -104,18 +106,20 @@ export function Results({ summary, progress, earned, onPractice, onAgain, onDone
           {advice.kind === 'push' && (
             <>
               <h3>📈 Keep climbing</h3>
-              <p>One or two more sessions will level up your mastery here.</p>
+              <p>One or two more rounds to level up.</p>
             </>
           )}
           {advice.kind === 'mastered' && (
             <>
               <h3>🥇 Gold-level skill</h3>
-              <p>You’ve mastered this. Keep it sharp in Lightning Rounds, or push into the next skill.</p>
+              <p>Mastered. Keep it sharp in Lightning Rounds.</p>
             </>
           )}
         </div>
       )}
 
+      </div>
+      <div className="results-side">
       {misses.length > 0 && (
         <div className="card">
           <h3>🧩 Break it down: your misses</h3>
@@ -131,6 +135,8 @@ export function Results({ summary, progress, earned, onPractice, onAgain, onDone
         </div>
       )}
 
+      </div>
+      </div>
       <div className="row">
         <button className="btn btn-block" onClick={onDone}>Done</button>
         <button className="btn btn-primary btn-block" onClick={onAgain}>Play again</button>

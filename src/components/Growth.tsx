@@ -41,6 +41,7 @@ export function Growth({ progress, onBack, onReset }: Props) {
         </div>
       </div>
 
+      <div className="growth-grid">
       <div className="card">
         <h3>Rank ladder</h3>
         <div className="ladder">
@@ -99,7 +100,7 @@ export function Growth({ progress, onBack, onReset }: Props) {
         </div>
       ))}
 
-      <div className="card">
+      <div className="card span-all">
         <h3>Achievements · {Object.keys(progress.achievements).length}/{ACHIEVEMENTS.length}</h3>
         <div className="badges">
           {ACHIEVEMENTS.map((a) => {
@@ -115,6 +116,7 @@ export function Growth({ progress, onBack, onReset }: Props) {
         </div>
       </div>
 
+      </div>
       <button
         className="btn btn-ghost btn-block danger"
         onClick={() => (armed ? onReset() : setArmed(true))}

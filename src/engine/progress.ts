@@ -1,5 +1,6 @@
 import { LABS, SKILLS, skillById, skillsForLab } from '../data';
-import type { LabId, Mode, Question, Skill } from '../types';
+import { ALIGNMENT } from '../data/curriculum';
+import type { LabId, Mode, Question, QuestionKind, Skill } from '../types';
 
 export interface SkillStat {
   /** 0–100, an exponential moving average of recent performance. */
@@ -34,6 +35,16 @@ export interface Progress {
   fastestCorrect: number | null;
   /** achievement id → ISO date earned */
   achievements: Record<string, string>;
+  /** How many teacher terms the student has unlocked per skill. */
+  terms: Record<string, number>;
+  /** How many times each game style has been played — how-to hints retire after a few. */
+  kindsPlayed: Partial<Record<QuestionKind, number>>;
+  coach: {
+    /** Skills whose intro brief the student dismissed. */
+    briefsDismissed: string[];
+    /** Student turned coaching tips off. */
+    off: boolean;
+  };
 }
 
 export const UNLOCK_AT = 50;
@@ -54,6 +65,9 @@ export function newProgress(): Progress {
     lightningBest: 0,
     fastestCorrect: null,
     achievements: {},
+    terms: {},
+    kindsPlayed: {},
+    coach: { briefsDismissed: [], off: false },
   };
 }
 
@@ -99,6 +113,24 @@ export function labMastery(p: Progress, lab: LabId): number {
   return Math.round(skills.reduce((sum, s) => sum + mastery(p, s.id), 0) / skills.length);
 }
 
+/** Next tier up and roughly how many right answers it takes to get there. */
+export function nextTier(p: Progress, skill: string): { name: string; answers: number } | null {
+  const steps: [number, string][] = [
+    [UNLOCK_AT, 'Bronze'],
+    [65, 'Silver'],
+    [85, 'Gold'],
+  ];
+  let m = mastery(p, skill);
+  const goal = steps.find(([at]) => m < at);
+  if (!goal) return null;
+  let answers = 0;
+  while (m < goal[0] && answers < 30) {
+    m += (100 - m) * 0.22;
+    answers++;
+  }
+  return { name: goal[1], answers };
+}
+
 /* ---------- ranks ---------- */
 
 export const RANKS = [
@@ -122,6 +154,9 @@ export function rankFor(xp: number) {
 
 /* ---------- recording answers ---------- */
 
+export const termCount = (skill: string) => ALIGNMENT[skill]?.terms.length ?? 0;
+export const termsUnlocked = (p: Progress, skill: string) => ALIGNMENT[skill]?.terms.slice(0, p.terms[skill] ?? 0) ?? [];
+
 /** Fold one answer into mastery, mode stats, and the missed list. */
 export function recordAnswer(p: Progress, q: Question, correct: boolean, timeLeft: number): Progress {
   const s = stat(p, q.skill);
@@ -142,6 +177,8 @@ export function recordAnswer(p: Progress, q: Question, correct: boolean, timeLef
     },
     modes: { ...p.modes, [q.mode]: { attempts: m.attempts + 1, correct: m.correct + (correct ? 1 : 0) } },
     missed: missed.slice(0, MAX_MISSED),
+    kindsPlayed: { ...p.kindsPlayed, [q.kind]: (p.kindsPlayed[q.kind] ?? 0) + 1 },
+    terms: correct ? { ...p.terms, [q.skill]: Math.min(termCount(q.skill), (p.terms[q.skill] ?? 0) + 1) } : p.terms,
   };
 }
 

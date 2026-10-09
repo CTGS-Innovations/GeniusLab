@@ -36,7 +36,7 @@ describe('content bank', () => {
   it('every skill has a why-this-matters pitch', () => {
     for (const s of SKILLS) {
       expect(SKILL_WHY[s.id]?.headline, s.id).toBeTruthy();
-      expect(SKILL_WHY[s.id]?.body, s.id).toBeTruthy();
+      expect(SKILL_WHY[s.id]?.points.length, s.id).toBe(3);
     }
   });
 

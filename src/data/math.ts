@@ -130,7 +130,7 @@ export const mathQuestions = [
       options: ['Difference of squares: (x + 3)(x − 3)', 'Perfect square: (x − 3)²', 'Sum of cubes', 'Not factorable'],
       why: 'a² − b² = (a + b)(a − b), with a = x and b = 3.' },
     { kind: 'mc', mode: 'next', difficulty: 3, context: 'x² + 5x + 6 = 0', prompt: 'What is the most efficient next step?',
-      options: ['Factor: find two numbers that multiply to 6 and add to 5', 'Divide both sides by x', 'Take the square root of both sides', 'Subtract 6, then divide by 5'],
+      options: ['Factor: two numbers with product 6 and sum 5', 'Divide both sides by x', 'Take the square root of both sides', 'Subtract 6, then divide by 5'],
       why: '2 and 3 work: (x + 2)(x + 3) = 0, so x = −2 or x = −3.' },
     { kind: 'spot', mode: 'spot', difficulty: 3, prompt: 'Tap the step that used a rule incorrectly.',
       tokens: ['log(100x)', '*= log 100 · log x', '= 2 · log x'],
@@ -161,7 +161,7 @@ export const mathQuestions = [
   ]),
   ...bank('m-multistep', [
     { kind: 'order', mode: 'next', difficulty: 1, prompt: 'Order the problem-solving routine for any word problem.',
-      steps: ['Read: what is the question asking?', 'Pull out the given information', 'Choose a strategy or write an equation', 'Solve', 'Check: does the answer make sense and answer the question?'],
+      steps: ['Read: what is the question asking?', 'Pull out the given information', 'Choose a strategy or write an equation', 'Solve', 'Check: does the answer make sense?'],
       why: 'Understand → plan → solve → check. Skipping the first two steps is where most word problems go wrong.' },
     { kind: 'chain', mode: 'breakdown', difficulty: 1, prompt: 'Break down this problem one step at a time.',
       context: 'Store A sells 12 granola bars for $9.00. Store B sells 8 granola bars for $6.40. Which store has the better deal?',
@@ -195,7 +195,7 @@ export const mathQuestions = [
       steps: [
         { ask: 'How many unknowns are there?', options: ['Two: student tickets and adult tickets', 'One: the total money', 'Three', 'None'], why: 'You do not know either ticket count, so name both: s and a.' },
         { ask: 'Which system of equations fits?', options: ['s + a = 50 and 12s + 18a = 720', 's + a = 720 and 12s + 18a = 50', '12s = 18a', 's + a = 30 and s = a'], why: 'One equation counts tickets; the other counts dollars.' },
-        { ask: 'What is a good next move?', options: ['Solve the first equation for a (a = 50 − s) and substitute', 'Add the two equations as they are', 'Multiply both equations by zero', 'Divide 720 by 50'], why: 'Substitution turns two unknowns into one.' },
+        { ask: 'What is a good next move?', options: ['Solve for a (a = 50 − s), then substitute', 'Add the two equations as they are', 'Multiply both equations by zero', 'Divide 720 by 50'], why: 'Substitution turns two unknowns into one.' },
         { ask: 'After substituting, 12s + 18(50 − s) = 720. What is s?', options: ['30', '20', '50', '60'], why: '12s + 900 − 18s = 720 → −6s = −180 → s = 30 student tickets.' },
       ],
       why: 'Two unknowns need two equations. Substitution is the move that cracks the system.' },
